@@ -2,7 +2,11 @@
     <string name="app_name">AAVT</string>
 
     <string name="mp4process">Mp4处理</string>
+    <string name="camerarecord">视频录制</string>
     <string name="open">打开</string>
     <string name="process">处理</string>
     <string name="play">播放</string>
+
+    <string name="start">开始</string>
+    <string name="stop">停止</string>
 </resources>

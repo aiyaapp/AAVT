@@ -188,7 +188,9 @@ public class Mp4Processor {
                     mVideoDecoderTrack=i;
                     mInputVideoWidth=format.getInteger(MediaFormat.KEY_WIDTH);
                     mInputVideoHeight=format.getInteger(MediaFormat.KEY_HEIGHT);
+                    Log.e("wuwang","createDecoder");
                     mVideoDecoder= MediaCodec.createDecoderByType(mime);
+                    Log.e("wuwang","createDecoder end");
                     mVideoTextureId=mEGLHelper.createTextureID();
                     mVideoSurfaceTexture=new SurfaceTexture(mVideoTextureId);
                     mVideoSurfaceTexture.setOnFrameAvailableListener(mFrameAvaListener);
@@ -408,63 +410,16 @@ public class Mp4Processor {
         mRenderer.destroy();
     }
 
+    public long getPresentationTime(){
+        return mVideoDecoderBufferInfo.presentationTimeUs*1000;
+    }
+
     private SurfaceTexture.OnFrameAvailableListener mFrameAvaListener=new SurfaceTexture.OnFrameAvailableListener() {
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
             mSem.release();
         }
     };
-
-    private final class WrapRenderer implements Renderer{
-
-        private Renderer mRenderer;
-        private OesFilter mFilter;
-
-        public WrapRenderer(Renderer renderer){
-            this.mRenderer=renderer;
-            mFilter=new OesFilter();
-            if(renderer!=null){
-                MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
-            }
-        }
-
-        public float[] getTextureMatrix(){
-            return mFilter.getTextureMatrix();
-        }
-
-        @Override
-        public void create() {
-            mFilter.create();
-            if(mRenderer!=null){
-                mRenderer.create();
-            }
-        }
-
-        @Override
-        public void sizeChanged(int width, int height) {
-            mFilter.sizeChanged(width, height);
-            if(mRenderer!=null){
-                mRenderer.sizeChanged(width, height);
-            }
-        }
-
-        @Override
-        public void draw(int texture) {
-            if(mRenderer!=null){
-                mRenderer.draw(mFilter.drawToTexture(texture));
-            }else{
-                mFilter.draw(texture);
-            }
-        }
-
-        @Override
-        public void destroy() {
-            if(mRenderer!=null){
-                mRenderer.destroy();
-            }
-            mFilter.destroy();
-        }
-    }
 
     public boolean stop() throws InterruptedException {
         synchronized (PROCESS_LOCK){

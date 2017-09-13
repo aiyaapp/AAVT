@@ -18,6 +18,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.mMp4Process:
                 startActivity(new Intent(this,ExampleMp4ProcessActivity.class));
                 break;
+            case R.id.mCameraRecord:
+                startActivity(new Intent(this,CameraRecorderActivity.class));
+                break;
         }
     }
 }

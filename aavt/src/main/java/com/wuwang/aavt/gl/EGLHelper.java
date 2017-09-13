@@ -22,6 +22,8 @@ public class EGLHelper {
     private EGLDisplay mEGLDisplay;
     private EGLConfig mEGLConfig;
 
+    private EGLSurface mEGLCopySurface;
+
     private EGLContext mShareEGLContext= EGL14.EGL_NO_CONTEXT;
 
     private boolean isDebug=true;
@@ -29,6 +31,7 @@ public class EGLHelper {
     private int mEglSurfaceType= EGL14.EGL_WINDOW_BIT;
 
     private Object mSurface;
+    private Object mCopySurface;
 
     /**
      * @param type one of {@link EGL14#EGL_WINDOW_BIT}、{@link EGL14#EGL_PBUFFER_BIT}、{@link EGL14#EGL_PIXMAP_BIT}
@@ -39,6 +42,10 @@ public class EGLHelper {
 
     public void setSurface(Object surface){
         this.mSurface=surface;
+    }
+
+    public void setCopySurface(Object surface){
+        this.mCopySurface=surface;
     }
 
     /**
@@ -118,6 +125,10 @@ public class EGLHelper {
         return true;
     }
 
+    public EGLSurface createEGLWindowSurface(Object object){
+        return EGL14.eglCreateWindowSurface(mEGLDisplay,mEGLConfig,object,new int[]{EGL14.EGL_NONE},0);
+    }
+
     public void setShareEGLContext(EGLContext context){
         this.mShareEGLContext=context;
     }
@@ -128,6 +139,10 @@ public class EGLHelper {
 
     public boolean makeCurrent(){
         return EGL14.eglMakeCurrent(mEGLDisplay,mEGLSurface,mEGLSurface,mEGLContext);
+    }
+
+    public boolean makeCurrent(EGLSurface surface){
+        return EGL14.eglMakeCurrent(mEGLDisplay,surface,surface,mEGLContext);
     }
 
     public boolean destroyGLES(){
@@ -143,8 +158,16 @@ public class EGLHelper {
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay,mEGLSurface,time);
     }
 
+    public void setPresentationTime(EGLSurface surface,long time){
+        EGLExt.eglPresentationTimeANDROID(mEGLDisplay,surface,time);
+    }
+
     public boolean swapBuffers(){
         return EGL14.eglSwapBuffers(mEGLDisplay,mEGLSurface);
+    }
+
+    public boolean swapBuffers(EGLSurface surface){
+        return EGL14.eglSwapBuffers(mEGLDisplay,surface);
     }
 
 
