@@ -78,6 +78,7 @@ public class Mp4Processor {
     private WrapRenderer mRenderer;
     private boolean mGLThreadFlag=false;
     private Semaphore mSem;
+    private Semaphore mDecodeSem;
 
     private final Object Extractor_LOCK=new Object();
     private final Object MUX_LOCK=new Object();
@@ -339,6 +340,11 @@ public class Mp4Processor {
         while (true){
             int mOutputIndex=mVideoDecoder.dequeueOutputBuffer(mVideoDecoderBufferInfo,TIME_OUT);
             if(mOutputIndex>=0){
+                try {
+                    mDecodeSem.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 mVideoDecoder.releaseOutputBuffer(mOutputIndex,true);
             }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 //MediaFormat format=mVideoDecoder.getOutputFormat();
@@ -378,6 +384,7 @@ public class Mp4Processor {
 
     private void glRunnable(){
         mSem=new Semaphore(0);
+        mDecodeSem=new Semaphore(1);
         mEGLHelper.setSurface(mOutputSurface);
         boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
         if(!ret)return;
@@ -402,6 +409,7 @@ public class Mp4Processor {
                 }
                 mEGLHelper.swapBuffers();
             }
+            mDecodeSem.release();
         }
         if(!isRenderToWindowSurface){
             videoEncodeStep(true);
