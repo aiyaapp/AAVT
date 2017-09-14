@@ -27,6 +27,7 @@ import com.wuwang.aavt.gl.EGLHelper;
 import com.wuwang.aavt.gl.FrameBuffer;
 import com.wuwang.aavt.utils.MatrixUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
@@ -81,6 +82,7 @@ public class CameraRecorder {
 
     private Thread mAudioThread;
     private final Object VIDEO_LOCK=new Object();
+    private final Object REC_LOCK=new Object();
 
     private final static long BASE_TIME=System.currentTimeMillis();
 
@@ -134,97 +136,103 @@ public class CameraRecorder {
     }
 
     public void startPreview(){
-        Log.d(Aavt.debugTag,"CameraRecorder startPreview");
-        mGLThreadFlag=true;
-        mGLThread=new Thread(mGLRunnable);
-        mGLThread.start();
+        synchronized (REC_LOCK){
+            Log.d(Aavt.debugTag,"CameraRecorder startPreview");
+            mGLThreadFlag=true;
+            mGLThread=new Thread(mGLRunnable);
+            mGLThread.start();
+        }
     }
 
     public void stopPreview() throws InterruptedException {
-        mGLThreadFlag=false;
-        mSem.release();
-        mGLThread.join();
-        Log.d(Aavt.debugTag,"CameraRecorder stopPreview");
+        synchronized (REC_LOCK){
+            mGLThreadFlag=false;
+            mSem.release();
+            mGLThread.join();
+            Log.d(Aavt.debugTag,"CameraRecorder stopPreview");
+        }
     }
 
     public void startRecord() throws IOException {
-        mEncodeSem=new Semaphore(0);
-        MediaFormat audioFormat=mConfig.getAudioFormat();
-        mAudioEncoder=MediaCodec.createEncoderByType(audioFormat.getString(MediaFormat.KEY_MIME));
-        mAudioEncoder.configure(audioFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
-        MediaFormat videoFormat=mConfig.getVideoFormat();
-        mVideoEncoder=MediaCodec.createEncoderByType(videoFormat.getString(MediaFormat.KEY_MIME));
-        //此处不能用mOutputSurface，会configure失败
-        mVideoEncoder.configure(videoFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mEncodeSurface=mVideoEncoder.createInputSurface();
+        synchronized (REC_LOCK){
+            isRecordStarted=true;
+            MediaFormat audioFormat=mConfig.getAudioFormat();
+            mAudioEncoder=MediaCodec.createEncoderByType(audioFormat.getString(MediaFormat.KEY_MIME));
+            mAudioEncoder.configure(audioFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
+            MediaFormat videoFormat=mConfig.getVideoFormat();
+            mVideoEncoder=MediaCodec.createEncoderByType(videoFormat.getString(MediaFormat.KEY_MIME));
+            //此处不能用mOutputSurface，会configure失败
+            mVideoEncoder.configure(videoFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
+            mEncodeSurface=mVideoEncoder.createInputSurface();
 
-        mAudioEncoder.start();
-        mVideoEncoder.start();
-        mMuxer=new MediaMuxer(mOutputPath,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        while (true){
-            int audioOutputIndex=mAudioEncoder.dequeueOutputBuffer(mAudioEncodeBufferInfo,TIME_OUT);
-            if(audioOutputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                mAudioTrack=mMuxer.addTrack(mAudioEncoder.getOutputFormat());
-                break;
-            }
-        }
-        while (true){
-            int videoOutputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncodeBufferInfo,TIME_OUT);
-            if(videoOutputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                mVideoTrack=mMuxer.addTrack(mVideoEncoder.getOutputFormat());
-                break;
-            }
-        }
-        Log.d(Aavt.debugTag,"CameraRecorder start audioTrack/videoTrack:"+mAudioTrack+"/"+mVideoTrack);
-        if(mAudioTrack>=0&&mVideoTrack>=0){
-            mMuxer.start();
-            isMuxStarted=true;
-        }
-
-        mRecordBufferSize = AudioRecord.getMinBufferSize(mRecordSampleRate,
-                mRecordChannelConfig, mRecordAudioFormat)*2;
+            mAudioEncoder.start();
+            mVideoEncoder.start();
+            mMuxer=new MediaMuxer(mOutputPath,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            mRecordBufferSize = AudioRecord.getMinBufferSize(mRecordSampleRate,
+                    mRecordChannelConfig, mRecordAudioFormat)*2;
 //        buffer=new byte[bufferSize];
-        mAudioRecord=new AudioRecord(MediaRecorder.AudioSource.MIC,mRecordSampleRate,mRecordChannelConfig,
-                mRecordAudioFormat,mRecordBufferSize);
+            mAudioRecord=new AudioRecord(MediaRecorder.AudioSource.MIC,mRecordSampleRate,mRecordChannelConfig,
+                    mRecordAudioFormat,mRecordBufferSize);
 
-
-
-        mAudioThread=new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mAudioRecord.startRecording();
-                while (!audioEncodeStep(isTryStopAudio));
-                mAudioRecord.stop();
-            }
-        });
-        mAudioThread.start();
-        isRecordAudioStarted=true;
-        isRecordVideoStarted=true;
-        isRecordStarted=true;
+            mAudioThread=new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    mAudioRecord.startRecording();
+                    while (!audioEncodeStep(isTryStopAudio));
+                    mAudioRecord.stop();
+                }
+            });
+            mAudioThread.start();
+            isRecordAudioStarted=true;
+        }
     }
 
     public void stopRecord() throws InterruptedException {
-        if(isRecordStarted){
-            isTryToStopRecord=true;
-            isTryStopAudio=true;
-            isTryStopVideo=true;
-            synchronized (VIDEO_LOCK){
-                mEGLEncodeSurface=null;
-                videoEncodeStep(true);
-                isRecordVideoStarted=false;
+        synchronized (REC_LOCK){
+            if(isRecordStarted){
+                isTryToStopRecord=true;
+                isTryStopAudio=true;
+                isTryStopVideo=true;
+                if(isRecordAudioStarted){
+                    mAudioThread.join();
+                    isTryToStopRecord=false;
+                    isRecordAudioStarted=false;
+                }
+                synchronized (VIDEO_LOCK){
+                    if(isRecordVideoStarted){
+                        mEGLEncodeSurface=null;
+                        videoEncodeStep(true);
+                    }
+                    isRecordVideoStarted=false;
+                }
+                mAudioEncoder.stop();
+                mAudioEncoder.release();
+                mVideoEncoder.stop();
+                mVideoEncoder.release();
+                try {
+                    if(isMuxStarted){
+                        isMuxStarted=false;
+                        mMuxer.stop();
+                        mMuxer.release();
+                    }
+                }catch (IllegalStateException e){
+                    e.printStackTrace();
+                    File file=new File(mOutputPath);
+                    if(file.exists()&&file.delete()){
+                        Log.d(Aavt.debugTag,"delete error file :"+mOutputPath);
+                    }
+                }
+
+
+                mAudioEncoder=null;
+                mVideoEncoder=null;
+                mMuxer=null;
+
+                mAudioTrack=-1;
+                mVideoTrack=-1;
+
+                isRecordStarted=false;
             }
-            mAudioThread.join();
-            isTryToStopRecord=false;
-            isRecordStarted=false;
-            mMuxer.stop();
-            mMuxer.release();
-            mMuxer=null;
-            mAudioEncoder.stop();
-            mAudioEncoder.release();
-            mAudioEncoder=null;
-            mVideoEncoder.stop();
-            mVideoEncoder.release();
-            mVideoEncoder=null;
         }
     }
 
@@ -264,7 +272,6 @@ public class CameraRecorder {
                 }
                 if(mGLThreadFlag){
                     long time=(System.currentTimeMillis()-BASE_TIME)*1000;
-                    Log.e(Aavt.debugTag,"time  -- >"+time);
                     mInputTexture.updateTexImage();
                     mInputTexture.getTransformMatrix(mRenderer.getTextureMatrix());
                     synchronized (VIDEO_LOCK){
@@ -290,10 +297,8 @@ public class CameraRecorder {
                             mShowEGLHelper.swapBuffers();
                         }
                     }
-
                 }
             }
-            //todo 发送信号，结束视频编码线程
             mShowEGLHelper.destroyGLES();
         }
     };
@@ -306,15 +311,20 @@ public class CameraRecorder {
             int outputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncodeBufferInfo,TIME_OUT);
             if(outputIndex>=0){
                 if(isMuxStarted&&mVideoEncodeBufferInfo.size>0&&mVideoEncodeBufferInfo.presentationTimeUs>0){
-                    //todo presentationTimesUs第一帧为0需要处理下
-                    Log.d(Aavt.debugTag,"video encode time:"+mVideoEncodeBufferInfo.presentationTimeUs);
                     mMuxer.writeSampleData(mVideoTrack,getOutputBuffer(mVideoEncoder,outputIndex),mVideoEncodeBufferInfo);
                 }
                 mVideoEncoder.releaseOutputBuffer(outputIndex,false);
+                if(mVideoEncodeBufferInfo.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
+                    Log.d(Aavt.debugTag,"CameraRecorder get video encode end of stream");
+                    return true;
+                }
             }else if(outputIndex==MediaCodec.INFO_TRY_AGAIN_LATER){
                 break;
             }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 Log.e(Aavt.debugTag,"get video output format changed ->"+mVideoEncoder.getOutputFormat().toString());
+                mVideoTrack=mMuxer.addTrack(mVideoEncoder.getOutputFormat());
+                mMuxer.start();
+                isMuxStarted=true;
             }
         }
         return false;
@@ -329,7 +339,6 @@ public class CameraRecorder {
                 long time=(System.currentTimeMillis()-BASE_TIME)*1000;
                 int length=mAudioRecord.read(buffer,mRecordBufferSize);
                 if(length>=0){
-                    Log.d(Aavt.debugTag,"isEnd:"+isEnd);
                     mAudioEncoder.queueInputBuffer(inputIndex,0,length,time,
                             isEnd?MediaCodec.BUFFER_FLAG_END_OF_STREAM:0);
                 }
@@ -337,9 +346,8 @@ public class CameraRecorder {
             while (true){
                 int outputIndex=mAudioEncoder.dequeueOutputBuffer(mAudioEncodeBufferInfo,TIME_OUT);
                 if(outputIndex>=0){
+                    //todo 第一帧音频时间戳为0的问题
                     if(isMuxStarted&&mAudioEncodeBufferInfo.size>0&&mAudioEncodeBufferInfo.presentationTimeUs>0){
-                        //todo presentationTimesUs第一帧为0需要处理下
-                        Log.d(Aavt.debugTag,"audio encode time:"+mAudioEncodeBufferInfo.presentationTimeUs);
                         mMuxer.writeSampleData(mAudioTrack,getOutputBuffer(mAudioEncoder,outputIndex),mAudioEncodeBufferInfo);
                     }
                     mAudioEncoder.releaseOutputBuffer(outputIndex,false);
@@ -347,13 +355,16 @@ public class CameraRecorder {
                         Log.d(Aavt.debugTag,"CameraRecorder get audio encode end of stream");
                         isTryStopAudio=false;
                         isRecordAudioStarted=false;
-                        mEncodeSem.release();
                         return true;
                     }
                 }else if(outputIndex==MediaCodec.INFO_TRY_AGAIN_LATER){
                     break;
                 }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                     Log.e(Aavt.debugTag,"get audio output format changed ->"+mAudioEncoder.getOutputFormat().toString());
+                    synchronized (VIDEO_LOCK){
+                        mAudioTrack=mMuxer.addTrack(mAudioEncoder.getOutputFormat());
+                        isRecordVideoStarted=true;
+                    }
                 }
             }
         }
