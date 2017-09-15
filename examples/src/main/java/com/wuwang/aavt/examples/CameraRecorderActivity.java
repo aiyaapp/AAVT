@@ -62,7 +62,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
 
                 mCameraRecord.setOutputSurface(holder.getSurface());
                 mCameraRecord.setPreviewSize(width,height);
-                mCameraRecord.setOutputSize(width, height);
+                mCameraRecord.setOutputSize(480, 640);
                 mCameraRecord.setRenderer(CameraRecorderActivity.this);
                 mCameraRecord.startPreview();
             }

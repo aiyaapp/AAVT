@@ -72,6 +72,8 @@ public class CameraRecorder {
 
     private int mPreviewWidth=0;
     private int mPreviewHeight=0;
+    private int mOutputWidth=0;
+    private int mOutputHeight=0;
 
     private boolean isRecordStarted=false;
     private boolean isTryToStopRecord=false;
@@ -100,6 +102,8 @@ public class CameraRecorder {
 
     public void setOutputSize(int width,int height){
         this.mConfig=new Configuration(width,height);
+        this.mOutputWidth=width;
+        this.mOutputHeight=height;
     }
 
     public void setPreviewSize(int width,int height){
@@ -125,10 +129,6 @@ public class CameraRecorder {
 
     public void setOutputSurface(Surface surface){
         this.mOutputSurface=surface;
-    }
-
-    public void setInputTexture(SurfaceTexture texture){
-
     }
 
     public void setRenderer(Renderer renderer){
@@ -259,10 +259,19 @@ public class CameraRecorder {
             mRenderer.setFlag(WrapRenderer.TYPE_CAMERA);
             mRenderer.create();
             mRenderer.sizeChanged(mPreviewWidth,mPreviewHeight);
-            Filter mBaseFilter=new BaseFilter();
-            MatrixUtils.flip(mBaseFilter.getVertexMatrix(),false,true);
-            mBaseFilter.create();
-            mBaseFilter.sizeChanged(mPreviewWidth,mPreviewHeight);
+            Filter mShowFilter=new BaseFilter();
+            Filter mRecFilter=new BaseFilter();
+            MatrixUtils.flip(mShowFilter.getVertexMatrix(),false,true);
+            mShowFilter.create();
+            mShowFilter.sizeChanged(mPreviewWidth,mPreviewHeight);
+
+            MatrixUtils.getMatrix(mRecFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,
+                    mPreviewWidth,mPreviewHeight,
+                    mOutputWidth,mOutputHeight);
+            MatrixUtils.flip(mRecFilter.getVertexMatrix(),false,true);
+            mRecFilter.create();
+            mRecFilter.sizeChanged(mOutputWidth,mOutputHeight);
+
             FrameBuffer mEncodeFrameBuffer=new FrameBuffer();
             while (mGLThreadFlag){
                 try {
@@ -283,16 +292,20 @@ public class CameraRecorder {
                             mEncodeFrameBuffer.bindFrameBuffer(mPreviewWidth,mPreviewHeight);
                             mRenderer.draw(mInputTextureId);
                             mEncodeFrameBuffer.unBindFrameBuffer();
-                            mBaseFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
+                            GLES20.glViewport(0,0,mConfig.getVideoFormat().getInteger(MediaFormat.KEY_WIDTH),
+                                    mConfig.getVideoFormat().getInteger(MediaFormat.KEY_HEIGHT));
+                            mRecFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
                             mShowEGLHelper.setPresentationTime(mEGLEncodeSurface,time*1000);
                             videoEncodeStep(false);
                             mShowEGLHelper.swapBuffers(mEGLEncodeSurface);
 
                             mShowEGLHelper.makeCurrent();
-                            mBaseFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
+                            GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
+                            mShowFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
                             mShowEGLHelper.setPresentationTime(0);
                             mShowEGLHelper.swapBuffers();
                         }else{
+                            GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
                             mRenderer.draw(mInputTextureId);
                             mShowEGLHelper.swapBuffers();
                         }
