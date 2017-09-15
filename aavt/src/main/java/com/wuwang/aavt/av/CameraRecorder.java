@@ -15,6 +15,7 @@ import android.opengl.GLES30;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
@@ -114,10 +115,15 @@ public class CameraRecorder {
     public SurfaceTexture createInputSurfaceTexture(){
         mInputTextureId=mShowEGLHelper.createTextureID();
         mInputTexture=new SurfaceTexture(mInputTextureId);
-        mInputTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
-            public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                mSem.release();
+            public void run() {
+                mInputTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+                    @Override
+                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                        mSem.release();
+                    }
+                });
             }
         });
         return mInputTexture;
@@ -138,6 +144,7 @@ public class CameraRecorder {
     public void startPreview(){
         synchronized (REC_LOCK){
             Log.d(Aavt.debugTag,"CameraRecorder startPreview");
+            mSem.drainPermits();
             mGLThreadFlag=true;
             mGLThread=new Thread(mGLRunnable);
             mGLThread.start();
@@ -258,7 +265,11 @@ public class CameraRecorder {
             }
             mRenderer.setFlag(WrapRenderer.TYPE_CAMERA);
             mRenderer.create();
+            int[] t=new int[1];
+            GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING,t,0);
             mRenderer.sizeChanged(mPreviewWidth,mPreviewHeight);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,t[0]);
+
             Filter mShowFilter=new BaseFilter();
             Filter mRecFilter=new BaseFilter();
             MatrixUtils.flip(mShowFilter.getVertexMatrix(),false,true);

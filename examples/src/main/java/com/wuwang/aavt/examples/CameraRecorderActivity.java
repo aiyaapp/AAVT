@@ -44,27 +44,16 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-
+                mCamera=Camera.open(0);
+                mCameraRecord.setOutputSurface(holder.getSurface());
+                mCameraRecord.setOutputSize(480, 640);
+                mCameraRecord.setRenderer(CameraRecorderActivity.this);
+                mCameraRecord.startPreview();
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                mCamera=Camera.open(0);
-                try {
-                    mCamera.setPreviewTexture(mCameraRecord.createInputSurfaceTexture());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Camera.Size mSize=mCamera.getParameters().getPreviewSize();
-                mCameraWidth=mSize.height;
-                mCameraHeight=mSize.width;
-                mCamera.startPreview();
-
-                mCameraRecord.setOutputSurface(holder.getSurface());
                 mCameraRecord.setPreviewSize(width,height);
-                mCameraRecord.setOutputSize(480, 640);
-                mCameraRecord.setRenderer(CameraRecorderActivity.this);
-                mCameraRecord.startPreview();
             }
 
             @Override
@@ -120,6 +109,16 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
 
     @Override
     public void create() {
+        try {
+            mCamera.setPreviewTexture(mCameraRecord.createInputSurfaceTexture());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Camera.Size mSize=mCamera.getParameters().getPreviewSize();
+        mCameraWidth=mSize.height;
+        mCameraHeight=mSize.width;
+        mCamera.startPreview();
+
         mFilter.create();
     }
 
