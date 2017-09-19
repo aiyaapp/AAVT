@@ -77,11 +77,9 @@ public class CameraRecorder {
     private int mOutputHeight=0;
 
     private boolean isRecordStarted=false;
-    private boolean isTryToStopRecord=false;
     private boolean isRecordVideoStarted=false;
     private boolean isRecordAudioStarted=false;
     private boolean isTryStopAudio=false;
-    private boolean isTryStopVideo=false;
 
     private Thread mAudioThread;
     private final Object VIDEO_LOCK=new Object();
@@ -155,7 +153,10 @@ public class CameraRecorder {
         synchronized (REC_LOCK){
             mGLThreadFlag=false;
             mSem.release();
-            mGLThread.join();
+            if(mGLThread!=null&&mGLThread.isAlive()){
+                mGLThread.join();
+                mGLThread=null;
+            }
             Log.d(Aavt.debugTag,"CameraRecorder stopPreview");
         }
     }
@@ -197,12 +198,9 @@ public class CameraRecorder {
     public void stopRecord() throws InterruptedException {
         synchronized (REC_LOCK){
             if(isRecordStarted){
-                isTryToStopRecord=true;
                 isTryStopAudio=true;
-                isTryStopVideo=true;
                 if(isRecordAudioStarted){
                     mAudioThread.join();
-                    isTryToStopRecord=false;
                     isRecordAudioStarted=false;
                 }
                 synchronized (VIDEO_LOCK){

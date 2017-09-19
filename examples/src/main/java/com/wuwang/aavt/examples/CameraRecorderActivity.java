@@ -13,8 +13,11 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.wuwang.aavt.av.CameraRecorder;
+import com.wuwang.aavt.core.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
+import com.wuwang.aavt.gl.BeautyFilter;
+import com.wuwang.aavt.gl.BlurFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.io.IOException;
@@ -30,7 +33,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
     private Camera mCamera;
     private TextView mTvStart;
     private boolean isStart=false;
-    private BaseFilter mFilter;
+    private Filter mFilter;
     private int mCameraWidth,mCameraHeight;
 
     @Override
@@ -38,13 +41,13 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
-        mFilter=new BaseFilter();
+        mFilter= new BlurFilter(getResources());//new BeautyFilter(getResources()).setBeautyLevel(5);
         mCameraRecord=new CameraRecorder();
         mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                mCamera=Camera.open(0);
+                mCamera=Camera.open(1);
                 mCameraRecord.setOutputSurface(holder.getSurface());
                 mCameraRecord.setOutputSize(480, 640);
                 mCameraRecord.setRenderer(CameraRecorderActivity.this);

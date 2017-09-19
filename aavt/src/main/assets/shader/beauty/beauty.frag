@@ -1,15 +1,15 @@
-precision lowp float;
-precision lowp int;
+precision highp float;
+precision highp int;
 uniform sampler2D uTexture;
 uniform int uIternum;
 uniform float uACoef; //参数
 uniform float uMixCoef; //混合系数
-varying highp vec2 vCoord;
+varying highp vec2 vTextureCo;
 varying highp vec2 vBlurCoord1s[14];
 const float distanceNormalizationFactor = 4.0;
 const mat3 saturateMatrix = mat3(1.1102,-0.0598,-0.061,-0.0774,1.0826,-0.1186,-0.0228,-0.0228,1.1772);
 
-void main( ) {
+void main() {
 
     vec3 centralColor;
     float central;
@@ -19,7 +19,7 @@ void main( ) {
     float distanceFromCentralColor;
     float gaussianWeight;
 
-    central = texture2D( uTexture, vCoord ).g;
+    central = texture2D( uTexture, vTextureCo ).g;
     gaussianWeightTotal = 0.2;
     sum = central * 0.2;
 
@@ -39,7 +39,7 @@ void main( ) {
     }
 
     sum = sum / gaussianWeightTotal;
-    centralColor = texture2D( uTexture, vCoord ).rgb;
+    centralColor = texture2D( uTexture, vTextureCo ).rgb;
     sampleColor = centralColor.g - sum + 0.5;
     for (int i = 0; i < uIternum; ++i) {
         if (sampleColor <= 0.5) {

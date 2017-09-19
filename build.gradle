@@ -20,6 +20,12 @@ allprojects {
     }
 }
 
+
+ext{
+    vCode=001
+    vName="a0.0.1"
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

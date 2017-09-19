@@ -112,9 +112,8 @@ public class Mp4Processor {
     }
 
     /**
-     * 设置直接渲染到指定的Surface上
+     * 设置直接渲染到指定的Surface上,测试用
      * @param surface 渲染的位置
-     * {@hide}
      */
     public void setOutputSurface(Surface surface){
         this.mOutputSurface=surface;

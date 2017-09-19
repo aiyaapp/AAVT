@@ -49,7 +49,7 @@ public enum MatrixUtils {
     /**
      * calculate appointed matrix by image size and view size
      * @param matrix  returns the result
-     * @param type  {@link #TYPE_FITEND,#TYPE_CENTERCROP,#TYPE_CENTERINSIDE,#TYPE_FITSTART,#TYPE_FITXY}
+     * @param type one of TYPE_FITEND,TYPE_CENTERCROP,TYPE_CENTERINSIDE,TYPE_FITSTART,TYPE_FITXY
      * @param imgWidth image width
      * @param imgHeight image height
      * @param viewWidth view width
