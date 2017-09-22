@@ -36,6 +36,10 @@ public enum GpuUtils {
      * @return shaderId
      */
     public static int loadShader(int shaderType,String source){
+        if(source==null){
+            glError(1,"Shader source ==null : shaderType ="+shaderType);
+            return 0;
+        }
         int shader= GLES20.glCreateShader(shaderType);
         if(0!=shader){
             GLES20.glShaderSource(shader,source);

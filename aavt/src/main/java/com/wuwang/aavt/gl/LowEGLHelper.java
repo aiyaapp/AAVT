@@ -1,5 +1,6 @@
 package com.wuwang.aavt.gl;
 
+import android.opengl.EGL14;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.util.Log;
@@ -127,6 +128,13 @@ public class LowEGLHelper {
         return mEgl.eglCreateWindowSurface(mEGLDisplay,mEGLConfig,object,new int[]{EGL10.EGL_NONE});
     }
 
+    public EGLSurface createPixmapSurface(Object object,int width,int height){
+        return mEgl.eglCreatePixmapSurface(mEGLDisplay,mEGLConfig,object,new int[]{
+                EGL10.EGL_WIDTH,width,
+                EGL10.EGL_HEIGHT,height,
+                EGL10.EGL_NONE});
+    }
+
     public void setShareEGLContext(EGLContext context){
         this.mShareEGLContext=context;
     }
@@ -152,6 +160,10 @@ public class LowEGLHelper {
         return true;
     }
 
+    public void destorySurface(EGLSurface surface){
+        mEgl.eglDestroySurface(mEGLDisplay,surface);
+    }
+
 //    public void setPresentationTime(long time){
 //        EGLExt.eglPresentationTimeANDROID(mEGLDisplay,mEGLSurface,time);
 //    }
@@ -167,7 +179,6 @@ public class LowEGLHelper {
     public boolean swapBuffers(EGLSurface surface){
         return mEgl.eglSwapBuffers(mEGLDisplay,surface);
     }
-
 
     //创建视频数据流的OES TEXTURE
     public int createTextureID() {

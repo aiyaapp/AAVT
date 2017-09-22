@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -17,9 +18,13 @@ import com.wuwang.aavt.core.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.BeautyFilter;
-import com.wuwang.aavt.gl.BlurFilter;
+import com.wuwang.aavt.gl.GrayFilter;
+import com.wuwang.aavt.gl.YuvOutputFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
@@ -41,13 +46,13 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
-        mFilter= new BlurFilter(getResources());//new BeautyFilter(getResources()).setBeautyLevel(5);
+        mFilter= new BaseFilter(getResources()); //new BeautyFilter(getResources()).setBeautyLevel(5);
         mCameraRecord=new CameraRecorder();
         mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                mCamera=Camera.open(1);
+                mCamera=Camera.open(0);
                 mCameraRecord.setOutputSurface(holder.getSurface());
                 mCameraRecord.setOutputSize(480, 640);
                 mCameraRecord.setRenderer(CameraRecorderActivity.this);
@@ -83,7 +88,12 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
             }
         });
         mTvStart= (TextView) findViewById(R.id.mTvStart);
+        mYuvFilter=new YuvOutputFilter(getResources());
     }
+
+    private boolean mGetYUVFlag=false;
+
+    private YuvOutputFilter mYuvFilter;
 
     public void onClick(View view){
         switch (view.getId()){
@@ -107,6 +117,9 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
                     startActivity(v);
                 }
                 break;
+            case R.id.mTvGetYUV:
+                mGetYUVFlag=true;
+                break;
         }
     }
 
@@ -123,17 +136,41 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         mCamera.startPreview();
 
         mFilter.create();
+        mYuvFilter.create();
     }
+
+    private int width,height;
 
     @Override
     public void sizeChanged(int width, int height) {
+        this.width=368;
+        this.height=640;
+        Log.e("wuwang","size:"+width+"/"+height);
         mFilter.sizeChanged(width, height);
         MatrixUtils.getMatrix(mFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,mCameraWidth,mCameraHeight,width,height);
         MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
+        mYuvFilter.sizeChanged(this.width,this.height);
     }
 
     @Override
     public void draw(int texture) {
+        if(mGetYUVFlag){
+            mYuvFilter.drawToTexture(texture);
+            byte[] data=new byte[width*height*3/2];
+            mYuvFilter.getOutput(data);
+            File file=new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.yuv");
+            try {
+                FileOutputStream fos=new FileOutputStream(file);
+                fos.write(data);
+                fos.flush();
+                fos.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mGetYUVFlag=false;
+        }
         mFilter.draw(texture);
     }
 
