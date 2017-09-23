@@ -66,7 +66,6 @@ public class YuvOutputFilter extends BaseFilter {
         GLES20.glViewport(0,0,mWidth,mHeight);
         mExportFilter.draw(mFrameBuffer.getCacheTextureId());
         GLES20.glReadPixels(0,0,mWidth,mHeight*3/8,GLES20.GL_RGBA,GLES20.GL_UNSIGNED_BYTE,mTempBuffer);
-//        Log.e("wuwang","read data:  "+ Arrays.toString(mTempBuffer.array()));
         GLES20.glViewport(lastViewPort[0],lastViewPort[1],lastViewPort[2],lastViewPort[3]);
     }
 
