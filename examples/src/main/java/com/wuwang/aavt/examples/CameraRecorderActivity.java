@@ -3,6 +3,7 @@ package com.wuwang.aavt.examples;
 import android.content.Intent;
 import android.hardware.Camera;
 import android.net.Uri;
+import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Created by aiya on 2017/9/12.
@@ -88,7 +90,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
             }
         });
         mTvStart= (TextView) findViewById(R.id.mTvStart);
-        mYuvFilter=new YuvOutputFilter(getResources());
+        mYuvFilter=new YuvOutputFilter(YuvOutputFilter.EXPORT_TYPE_NV12);
     }
 
     private boolean mGetYUVFlag=false;
@@ -143,13 +145,15 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
 
     @Override
     public void sizeChanged(int width, int height) {
-        this.width=480;
+        this.width=368;
         this.height=640;
         Log.e("wuwang","size:"+width+"/"+height);
         mFilter.sizeChanged(width, height);
         MatrixUtils.getMatrix(mFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,mCameraWidth,mCameraHeight,width,height);
         MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
         mYuvFilter.sizeChanged(this.width,this.height);
+        MatrixUtils.getMatrix(mYuvFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,mCameraWidth,mCameraHeight,this.width,this.height);
+        MatrixUtils.flip(mYuvFilter.getVertexMatrix(),false,true);
     }
 
     @Override
@@ -158,6 +162,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
             mYuvFilter.drawToTexture(texture);
             byte[] data=new byte[width*height*3/2];
             mYuvFilter.getOutput(data);
+            Log.e("wuwang","data->"+ Arrays.toString(data));
             File file=new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.yuv");
             try {
                 FileOutputStream fos=new FileOutputStream(file);
@@ -172,6 +177,20 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
             mGetYUVFlag=false;
         }
         mFilter.draw(texture);
+//        byte[] data=new byte[width*height*3/2];
+//        mYuvFilter.getOutput(data);
+//        File file=new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.yuv");
+//        try {
+//            FileOutputStream fos=new FileOutputStream(file);
+//            fos.write(data);
+//            fos.flush();
+//            fos.close();
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//
+//        }
     }
 
     @Override

@@ -38,8 +38,8 @@ vec2 cPos(float t,float shiftx,float shifty){
 //Y分量的计算
 vec4 calculateY(){
     //填充点对应图片的位置
-    float posX=uWidth*vTextureCo.x;
-    float posY=uHeight*vTextureCo.y;
+    float posX=floor(uWidth*vTextureCo.x);
+    float posY=floor(uHeight*vTextureCo.y);
     //实际采样起始点对应图片的位置
     float rPosX=mod(posX*4.,uWidth);
     float rPosY=posY*4.+floor(posX*4./uWidth);
@@ -56,8 +56,8 @@ vec4 calculateY(){
 //U分量的计算
 vec4 calculateU(){
     //U的采样，宽度是1:8，高度是1:2，U的位置高度偏移了1/4，一个点是4个U，采样区域是宽高位8*2
-    float posX=uWidth*vTextureCo.x;
-    float posY=uHeight*(vTextureCo.y-0.2500);
+    float posX=floor(uWidth*vTextureCo.x);
+    float posY=floor(uHeight*(vTextureCo.y-0.2500));
     //实际采样起始点对应图片的位置
     float rPosX=mod(posX*8.,uWidth);
     float rPosY=posY*16.+floor(posX*8./uWidth)*2.;
@@ -73,8 +73,8 @@ vec4 calculateU(){
 //V分量计算
 vec4 calculateV(){
     //V的采样，宽度是1:8，高度是1:2，U的位置高度偏移了1/4，一个点是4个V，采样区域是宽高位8*2
-    float posX=uWidth*vTextureCo.x;
-    float posY=uHeight*(vTextureCo.y-0.3125);
+    float posX=floor(uWidth*vTextureCo.x);
+    float posY=floor(uHeight*(vTextureCo.y-0.3125));
     //实际采样起始点对应图片的位置
     float rPosX=mod(posX*8.,uWidth);
     float rPosY=posY*16.+floor(posX*8./uWidth)*2.;
@@ -89,8 +89,8 @@ vec4 calculateV(){
 
 //UV的计算，YUV420SP用，test
 vec4 calculateUV(){
-    float posX=uWidth*vTextureCo.x;
-    float posY=uHeight*(vTextureCo.y-0.2500);
+    float posX=floor(uWidth*vTextureCo.x);
+    float posY=floor(uHeight*(vTextureCo.y-0.2500));
     //实际采样起始点对应图片的位置
     float rPosX=mod(posX*4.,uWidth);
     float rPosY=posY*8.+floor(posX*4./uWidth)*2.;

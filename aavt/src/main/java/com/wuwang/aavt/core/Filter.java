@@ -12,6 +12,19 @@ import java.nio.FloatBuffer;
 
 public abstract class Filter implements Renderer {
 
+    public static final String BASE_VERT="attribute vec4 aVertexCo;\n" +
+            "attribute vec2 aTextureCo;\n" +
+            "\n" +
+            "uniform mat4 uVertexMatrix;\n" +
+            "uniform mat4 uTextureMatrix;\n" +
+            "\n" +
+            "varying vec2 vTextureCo;\n" +
+            "\n" +
+            "void main(){\n" +
+            "    gl_Position = uVertexMatrix*aVertexCo;\n" +
+            "    vTextureCo = (uTextureMatrix*vec4(aTextureCo,0,1)).xy;\n" +
+            "}";
+
     private float[] mVertexMatrix= MatrixUtils.getOriginalMatrix();
     private float[] mTextureMatrix=MatrixUtils.getOriginalMatrix();
 
