@@ -20,6 +20,7 @@ import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.GrayFilter;
+import com.wuwang.aavt.gl.WaterColorFilter;
 import com.wuwang.aavt.gl.YuvOutputFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
@@ -48,7 +49,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
-        mFilter= new BaseFilter(getResources()); //new BeautyFilter(getResources()).setBeautyLevel(5);
+        mFilter= new WaterColorFilter(getResources()); //new BeautyFilter(getResources()).setBeautyLevel(5);
         mCameraRecord=new CameraRecorder();
         mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
