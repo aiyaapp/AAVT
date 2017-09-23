@@ -2,6 +2,7 @@ package com.wuwang.aavt.gl;
 
 import android.content.res.Resources;
 import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.util.Log;
 
 import com.wuwang.aavt.core.Filter;

@@ -143,7 +143,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
 
     @Override
     public void sizeChanged(int width, int height) {
-        this.width=368;
+        this.width=480;
         this.height=640;
         Log.e("wuwang","size:"+width+"/"+height);
         mFilter.sizeChanged(width, height);

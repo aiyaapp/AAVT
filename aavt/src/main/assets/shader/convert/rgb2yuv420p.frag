@@ -1,4 +1,5 @@
 precision highp float;
+precision highp int;
 
 varying vec2 vTextureCo;
 uniform sampler2D uTexture;
@@ -14,76 +15,102 @@ uniform float uHeight;			// 纹理高
 //导出原理：采样坐标只作为确定输出位置使用，通过输出纹理计算实际采样位置，进行采样和并转换,
 //然后将转换的结果填充到输出位置
 
+float cY(float x,float y){
+    vec4 c=texture2D(uTexture,vec2(x,y));
+    return c.r*0.2990+c.g*0.5870+c.b*0.1140;
+}
+
+float cU(float x,float y){
+    vec4 c=texture2D(uTexture,vec2(x,y));
+    return -0.1471*c.r - 0.2889*c.g + 0.4360*c.b+0.5000;
+}
+
+float cV(float x,float y){
+    vec4 c=texture2D(uTexture,vec2(x,y));
+    return 0.6150*c.r - 0.5150*c.g - 0.1000*c.b+0.5000;
+}
+
+vec2 cPos(float t,float shiftx,float shifty){
+    vec2 pos=vec2(uWidth*vTextureCo.x,uHeight*(vTextureCo-shifty));
+    return vec2(mod(pos.x*shiftx,uWidth),(pos.y*shiftx+floor(pos.x*shiftx/uWidth))*t);
+}
+
+//Y分量的计算
+vec4 calculateY(){
+    //填充点对应图片的位置
+    float posX=uWidth*vTextureCo.x;
+    float posY=uHeight*vTextureCo.y;
+    //实际采样起始点对应图片的位置
+    float rPosX=mod(posX*4.,uWidth);
+    float rPosY=posY*4.+floor(posX*4./uWidth);
+    vec4 oColor=vec4(0);
+    float textureYPos=rPosY/uHeight;
+    oColor[0]=cY(rPosX/uWidth,textureYPos);
+    oColor[1]=cY((rPosX+1.)/uWidth,textureYPos);
+    oColor[2]=cY((rPosX+2.)/uWidth,textureYPos);
+    oColor[3]=cY((rPosX+3.)/uWidth,textureYPos);
+    return oColor;
+}
+
+
+//U分量的计算
+vec4 calculateU(){
+    //U的采样，宽度是1:8，高度是1:2，U的位置高度偏移了1/4，一个点是4个U，采样区域是宽高位8*2
+    float posX=uWidth*vTextureCo.x;
+    float posY=uHeight*(vTextureCo.y-0.2500);
+    //实际采样起始点对应图片的位置
+    float rPosX=mod(posX*8.,uWidth);
+    float rPosY=posY*16.+floor(posX*8./uWidth)*2.;
+
+    vec4 oColor=vec4(0);
+    oColor[0]= cU(rPosX/uWidth,rPosY/uHeight);
+    oColor[1]= cU((rPosX+2.)/uWidth,rPosY/uHeight);
+    oColor[2]= cU((rPosX+4.)/uWidth,rPosY/uHeight);
+    oColor[3]= cU((rPosX+6.)/uWidth,rPosY/uHeight);
+    return oColor;
+}
+
+//V分量计算
+vec4 calculateV(){
+    //V的采样，宽度是1:8，高度是1:2，U的位置高度偏移了1/4，一个点是4个V，采样区域是宽高位8*2
+    float posX=uWidth*vTextureCo.x;
+    float posY=uHeight*(vTextureCo.y-0.3125);
+    //实际采样起始点对应图片的位置
+    float rPosX=mod(posX*8.,uWidth);
+    float rPosY=posY*16.+floor(posX*8./uWidth)*2.;
+
+    vec4 oColor=vec4(0);
+    oColor[0]=cV(rPosX/uWidth,rPosY/uHeight);
+    oColor[1]=cV((rPosX+2.)/uWidth,rPosY/uHeight);
+    oColor[2]=cV((rPosX+4.)/uWidth,rPosY/uHeight);
+    oColor[3]=cV((rPosX+6.)/uWidth,rPosY/uHeight);
+    return oColor;
+}
+
+//UV的计算，YUV420SP用，test
+vec4 calculateUV(){
+    float posX=uWidth*vTextureCo.x;
+    float posY=uHeight*(vTextureCo.y-0.2500);
+    //实际采样起始点对应图片的位置
+    float rPosX=mod(posX*4.,uWidth);
+    float rPosY=posY*8.+floor(posX*4./uWidth)*2.;
+    vec4 oColor=vec4(0);
+    oColor[0]= cU((rPosX+1.)/uWidth,(rPosY+1.)/uHeight);
+    oColor[1]= cV((rPosX+1.)/uWidth,(rPosY+1.)/uHeight);
+    oColor[2]= cU((rPosX+3.)/uWidth,(rPosY+1.)/uHeight);
+    oColor[3]= cV((rPosX+3.)/uWidth,(rPosY+1.)/uHeight);
+    return oColor;
+}
+
 void main() {
-   if(vTextureCo.y<0.2500){
-        //todo 填充Y部分
-        //Y的采样，宽度是1:4，高度是1:1，一个点是4个Y，采样区域是4*1
-
-        //填充点对应图片的位置
-        float posX=uWidth*vTextureCo.x;
-        float posY=uHeight*vTextureCo.y;
-        //实际采样起始点对应图片的位置
-        float rPosX=mod(posX*4.,uWidth);
-        float rPosY=posY*4.+float(int(posX*4.)/int(uWidth));
-
-        vec4 color=texture2D(uTexture,vec2(rPosX,rPosY));
-        vec4 oColor=vec4(0);
-        vec2 tempTextureCo=vec2(0.,rPosY/uHeight);
-        for(float i=0.;i<4.;i+=1.){
-            tempTextureCo.x=(rPosX+i)/float(uWidth);
-            vec4 color=texture2D(uTexture,tempTextureCo);
-            oColor[int(i)]=0.299*color.r + 0.587*color.g + 0.114*color.b;
-        }
-        gl_FragColor=oColor;
-//   }else if(vTextureCo.y<0.3125){
-//        //todo 填充U部分
-//        //U的采样，宽度是1:8，高度是1:2，U的位置高度偏移了1/4，一个点是4个U，采样区域是宽高位8*2
-//        float posX=uWidth*vTextureCo.x;
-//        float posY=uHeight*vTextureCo.y;
-//        //实际采样起始点对应图片的位置
-//        float rPosX=mod(posX*8.,uWidth);
-//        float rPosY=posY*8.-uHeight*2.+float(int(posX*8.)/int(uWidth));
-//
-//        vec4 color=texture2D(uTexture,vec2(rPosX,rPosY));
-//        vec4 oColor=vec4(0);
-//        vec2 tempTextureCo=vec2(0.,rPosY/uHeight);
-//        //一共需要采样四个U出来
-//        for(float i=0.;i<4.;i+=1.){
-//            //采样四个点计算出U
-//            vec4 fourColor;
-//            fourColor+=texture2D(uTexture,vec2((rPosX+2.*i)/uWidth,rPosY/uHeight));
-//            fourColor+=texture2D(uTexture,vec2((rPosX+1.+2.*i)/uWidth,rPosY/uHeight));
-//            fourColor+=texture2D(uTexture,vec2((rPosX+1.+2.*i)/uWidth,(rPosY+1.)/uHeight));
-//            fourColor+=texture2D(uTexture,vec2((rPosX+2.*i)/uWidth,(rPosY+1.)/uHeight));
-//            fourColor/=4.;
-//            oColor[int(i)]= -0.147*fourColor.r - 0.289*fourColor.g + 0.436*fourColor.b;
-//        }
-//        gl_FragColor=oColor;
-   }else if(vTextureCo.y<0.3750){
-        //todo 填充V部分
-        //U的采样，宽度是1:4，高度是1:2，U的位置高度偏移了5/16，一个点是4个U，采样区域是宽高位8*2
-//        float posX=uWidth*vTextureCo.x;
-//        float posY=uHeight*(vTextureCo.y-0.2500);
-//        //实际采样起始点对应图片的位置
-//        float rPosX=mod(posX*4.,uWidth);
-//        float rPosY=posY*2.+float(int(posX*4.)/int(uWidth));
-//
-//        vec4 color=texture2D(uTexture,vec2(rPosX,rPosY));
-//        vec4 oColor=vec4(0);
-//        //一共需要采样四个U出来
-//        for(float i=0.;i<2.;i+=1.){
-//            //采样四个点计算出U
-//            vec4 fourColor=vec4(0);
-//            fourColor+=texture2D(uTexture,vec2((rPosX+2.*i)/uWidth,rPosY/uHeight));
-//            fourColor+=texture2D(uTexture,vec2((rPosX+1.+2.*i)/uWidth,rPosY/uHeight));
-//            fourColor+=texture2D(uTexture,vec2((rPosX+1.+2.*i)/uWidth,(rPosY+1.)/uHeight));
-//            fourColor+=texture2D(uTexture,vec2((rPosX+2.*i)/uWidth,(rPosY+1.)/uHeight));
-//            fourColor/=4.;
-//            oColor[int(i*2.)]= -0.147*fourColor.r - 0.289*fourColor.g + 0.436*fourColor.b;
-//            oColor[int(i*2.+1.)]= 0.615*fourColor.r - 0.515*fourColor.r - 0.100*fourColor.r;
-//        }
-//        gl_FragColor=oColor;
-   }else{
+    if(vTextureCo.y<0.2500){
+        gl_FragColor=calculateY();
+    }else if(vTextureCo.y<0.3125){
+        gl_FragColor=calculateU();
+    }else if(vTextureCo.y<0.3750){
+        gl_FragColor=calculateV();
+    }else{
         gl_FragColor=vec4(0,0,0,0);
     }
+    //gl_FragColor=vec4(rPosX/uWidth,rPosY/uHeight,rPosX/uWidth,rPosY/uHeight);
 }
