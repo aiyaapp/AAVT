@@ -2,8 +2,6 @@ package com.wuwang.aavt.gl;
 
 import android.content.res.Resources;
 
-import com.wuwang.aavt.core.Filter;
-
 public class BaseFilter extends Filter {
 
     public BaseFilter(Resources resource) {
@@ -33,6 +31,11 @@ public class BaseFilter extends Filter {
                 "void main() {\n" +
                 "    gl_FragColor = texture2D( uTexture, vTextureCo);\n" +
                 "}");
+    }
+
+    @Override
+    protected void onCreate() {
+        super.onCreate();
     }
 
 }

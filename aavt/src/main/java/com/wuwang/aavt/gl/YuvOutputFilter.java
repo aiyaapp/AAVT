@@ -2,13 +2,10 @@ package com.wuwang.aavt.gl;
 
 import android.content.res.Resources;
 import android.opengl.GLES20;
-import android.util.Log;
 
-import com.wuwang.aavt.core.Filter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * Created by aiya on 2017/9/21.

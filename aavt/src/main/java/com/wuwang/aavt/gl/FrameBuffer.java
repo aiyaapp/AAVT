@@ -80,9 +80,11 @@ public class FrameBuffer {
     }
 
     public void destroyFrameBuffer(){
-        GLES20.glDeleteFramebuffers(1,mFrameTemp,0);
-        GLES20.glDeleteTextures(1,mFrameTemp,1);
-        mFrameTemp=null;
+        if(mFrameTemp!=null){
+            GLES20.glDeleteFramebuffers(1,mFrameTemp,0);
+            GLES20.glDeleteTextures(1,mFrameTemp,1);
+            mFrameTemp=null;
+        }
     }
 
 }

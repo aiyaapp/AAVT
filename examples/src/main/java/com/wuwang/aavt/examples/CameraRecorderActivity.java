@@ -3,7 +3,6 @@ package com.wuwang.aavt.examples;
 import android.content.Intent;
 import android.hardware.Camera;
 import android.net.Uri;
-import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
@@ -15,12 +14,10 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.wuwang.aavt.av.CameraRecorder;
-import com.wuwang.aavt.core.Filter;
+import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.BeautyFilter;
-import com.wuwang.aavt.gl.GrayFilter;
-import com.wuwang.aavt.gl.WaterColorFilter;
+import com.wuwang.aavt.gl.SobelFilter;
 import com.wuwang.aavt.gl.YuvOutputFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
@@ -49,22 +46,22 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
-        mFilter= new WaterColorFilter(getResources()); //new BeautyFilter(getResources()).setBeautyLevel(5);
+        mFilter= new SobelFilter(getResources()); //new BeautyFilter(getResources()).setBeautyLevel(5);
         mCameraRecord=new CameraRecorder();
         mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                mCamera=Camera.open(0);
+                mCamera=Camera.open(1);
                 mCameraRecord.setOutputSurface(holder.getSurface());
                 mCameraRecord.setOutputSize(480, 640);
                 mCameraRecord.setRenderer(CameraRecorderActivity.this);
-                mCameraRecord.startPreview();
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 mCameraRecord.setPreviewSize(width,height);
+                mCameraRecord.startPreview();
             }
 
             @Override

@@ -1,8 +1,10 @@
-package com.wuwang.aavt.core;
+package com.wuwang.aavt.gl;
 
 import android.content.res.Resources;
 import android.opengl.GLES20;
 
+import com.wuwang.aavt.core.Renderer;
+import com.wuwang.aavt.gl.FrameBuffer;
 import com.wuwang.aavt.utils.GpuUtils;
 import com.wuwang.aavt.utils.MatrixUtils;
 
@@ -45,12 +47,17 @@ public abstract class Filter implements Renderer {
     protected int mGLTextureMatrix;
     protected int mGLTexture;
 
-    private int[] mFrameTemp;
+    private int mGLWidth;
+    private int mGLHeight;
+    private boolean isUseSize=false;
+
+    private FrameBuffer mFrameTemp;
 
     protected Filter(Resources resource,String vertex,String fragment){
         this.mRes=resource;
         this.mVertex=vertex;
         this.mFragment=fragment;
+        mFrameTemp=new FrameBuffer();
         initBuffer();
     }
 
@@ -103,6 +110,10 @@ public abstract class Filter implements Renderer {
         return mTextureMatrix;
     }
 
+    protected void shaderNeedTextureSize(boolean need){
+        this.isUseSize=need;
+    }
+
     protected void onCreate(){
         if(mRes!=null){
             mGLProgram= GpuUtils.createGLProgramByAssetsFile(mRes,mVertex,mFragment);
@@ -114,6 +125,11 @@ public abstract class Filter implements Renderer {
         mGLVertexMatrix=GLES20.glGetUniformLocation(mGLProgram,"uVertexMatrix");
         mGLTextureMatrix=GLES20.glGetUniformLocation(mGLProgram,"uTextureMatrix");
         mGLTexture=GLES20.glGetUniformLocation(mGLProgram,"uTexture");
+
+        if(isUseSize){
+            mGLWidth=GLES20.glGetUniformLocation(mGLProgram,"uWidth");
+            mGLHeight=GLES20.glGetUniformLocation(mGLProgram,"uHeight");
+        }
     }
 
     protected void onSizeChanged(int width,int height){
@@ -132,10 +148,12 @@ public abstract class Filter implements Renderer {
         onSizeChanged(width, height);
         this.mWidth=width;
         this.mHeight=height;
+
+        mFrameTemp.destroyFrameBuffer();
     }
 
     @Override
-    public final void draw(int texture) {
+    public void draw(int texture) {
         onClear();
         onUseProgram();
         onSetExpandData();
@@ -144,7 +162,7 @@ public abstract class Filter implements Renderer {
     }
 
     public int drawToTexture(int texture){
-        onBindFramebuffer();
+        mFrameTemp.bindFrameBuffer(mWidth,mHeight);
         onClear();
         onUseProgram();
         MatrixUtils.flip(mVertexMatrix,false,true);
@@ -152,17 +170,14 @@ public abstract class Filter implements Renderer {
         MatrixUtils.flip(mVertexMatrix,false,true);
         onBindTexture(texture);
         onDraw();
-        onUnBindFrameBuffer();
-        return mFrameTemp[1];
+        mFrameTemp.unBindFrameBuffer();
+        return mFrameTemp.getCacheTextureId();
     }
 
     @Override
     public void destroy() {
-        if(mFrameTemp!=null){
-            GLES20.glDeleteFramebuffers(1,mFrameTemp,0);
-            GLES20.glDeleteTextures(1,mFrameTemp,1);
-            mFrameTemp=null;
-        }
+        mFrameTemp.destroyFrameBuffer();
+        GLES20.glDeleteProgram(mGLProgram);
     }
 
     protected void onUseProgram(){
@@ -190,6 +205,10 @@ public abstract class Filter implements Renderer {
     protected void onSetExpandData(){
         GLES20.glUniformMatrix4fv(mGLVertexMatrix,1,false,mVertexMatrix,0);
         GLES20.glUniformMatrix4fv(mGLTextureMatrix,1,false,mTextureMatrix,0);
+        if(isUseSize){
+            GLES20.glUniform1f(mGLWidth,mWidth);
+            GLES20.glUniform1f(mGLHeight,mHeight);
+        }
     }
 
     /**
@@ -201,34 +220,4 @@ public abstract class Filter implements Renderer {
         GLES20.glUniform1i(mGLTexture,0);
     }
 
-    protected void onBindFramebuffer(){
-        if(mFrameTemp==null){
-            mFrameTemp=new int[3];
-            GLES20.glGenFramebuffers(1,mFrameTemp,0);
-            GLES20.glGenTextures(1,mFrameTemp,1);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,mFrameTemp[1]);
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0,GLES20.GL_RGBA, mWidth, mHeight,
-                    0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
-            //设置缩小过滤为使用纹理中坐标最接近的一个像素的颜色作为需要绘制的像素颜色
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
-            //设置放大过滤为使用纹理中坐标最接近的若干个颜色，通过加权平均算法得到需要绘制的像素颜色
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
-            //设置环绕方向S，截取纹理坐标到[1/2n,1-1/2n]。将导致永远不会与border融合
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_CLAMP_TO_EDGE);
-            //设置环绕方向T，截取纹理坐标到[1/2n,1-1/2n]。将导致永远不会与border融合
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_CLAMP_TO_EDGE);
-
-            GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING,mFrameTemp,2);
-            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,mFrameTemp[0]);
-            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
-                    GLES20.GL_TEXTURE_2D, mFrameTemp[1], 0);
-        }else{
-            GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING,mFrameTemp,2);
-            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,mFrameTemp[0]);
-        }
-    }
-
-    protected void onUnBindFrameBuffer(){
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,mFrameTemp[2]);
-    }
 }

@@ -16,7 +16,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.wuwang.aavt.av.Mp4Processor;
-import com.wuwang.aavt.core.Filter;
+import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.GrayFilter;
 

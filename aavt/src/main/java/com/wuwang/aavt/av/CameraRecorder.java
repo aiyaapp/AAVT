@@ -11,17 +11,14 @@ import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
-import android.opengl.GLES30;
 import android.os.Build;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
 
 import com.wuwang.aavt.Aavt;
-import com.wuwang.aavt.core.Filter;
+import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.EGLHelper;
@@ -32,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class CameraRecorder {

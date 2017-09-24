@@ -3,8 +3,6 @@ package com.wuwang.aavt.gl;
 import android.content.res.Resources;
 import android.opengl.GLES20;
 
-import com.wuwang.aavt.core.Filter;
-
 /**
  * Created by aiya on 2017/9/18.
  */
