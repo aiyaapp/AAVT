@@ -14,9 +14,11 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.wuwang.aavt.av.CameraRecorder;
+import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
+import com.wuwang.aavt.gl.RollFilter;
 import com.wuwang.aavt.gl.SobelFilter;
 import com.wuwang.aavt.gl.YuvOutputFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
@@ -46,7 +48,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
-        mFilter= new SobelFilter(getResources()); //new BeautyFilter(getResources()).setBeautyLevel(5);
+        mFilter= new BeautyFilter(getResources()).setBeautyLevel(5);
         mCameraRecord=new CameraRecorder();
         mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {

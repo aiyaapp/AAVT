@@ -89,6 +89,13 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 break;
+            case R.id.mStop:
+                try {
+                    mProcessor.stop();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                break;
             case R.id.mPlay:
                 Intent v=new Intent(Intent.ACTION_VIEW);
                 v.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4"),"video/mp4");

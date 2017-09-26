@@ -20,15 +20,16 @@ public class BeautyFilter extends Filter {
 
     public BeautyFilter(Resources resource) {
         super(resource,"shader/beauty/beauty.vert", "shader/beauty/beauty.frag");
+        shaderNeedTextureSize(true);
         setBeautyLevel(0);
     }
 
     @Override
     protected void onCreate() {
         super.onCreate();
-        mGLaaCoef=GLES20.glGetUniformLocation(mGLProgram,"aaCoef");
-        mGLmixCoef=GLES20.glGetUniformLocation(mGLProgram,"mixCoef");
-        mGLiternum=GLES20.glGetUniformLocation(mGLProgram,"iternum");
+        mGLaaCoef=GLES20.glGetUniformLocation(mGLProgram,"uACoef");
+        mGLmixCoef=GLES20.glGetUniformLocation(mGLProgram,"uMixCoef");
+        mGLiternum=GLES20.glGetUniformLocation(mGLProgram,"uIternum");
     }
 
     public Filter setBeautyLevel(int level){
