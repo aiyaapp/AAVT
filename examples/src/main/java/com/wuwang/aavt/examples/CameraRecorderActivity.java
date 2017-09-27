@@ -50,6 +50,7 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
         mFilter= new BeautyFilter(getResources()).setBeautyLevel(5);
         mCameraRecord=new CameraRecorder();
+
         mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override

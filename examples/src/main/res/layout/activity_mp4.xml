@@ -22,7 +22,6 @@
             android:layout_height="wrap_content"
             android:id="@+id/mStop"
             android:onClick="onClick"
-            android:visibility="gone"
             android:text="@string/stop"/>
         <Button
             android:layout_width="wrap_content"
