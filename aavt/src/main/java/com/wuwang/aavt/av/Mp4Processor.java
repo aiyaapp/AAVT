@@ -442,7 +442,7 @@ public class Mp4Processor {
                 mEGLHelper.swapBuffers();
             }
             if(mProgressListener!=null){
-                mProgressListener.onProgress(getTotalVideoTime()*1000000L,getPresentationTime());
+                mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoDecoderBufferInfo.presentationTimeUs);
             }
             mDecodeSem.release();
         }
