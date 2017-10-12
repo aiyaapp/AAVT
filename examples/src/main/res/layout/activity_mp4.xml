@@ -14,18 +14,6 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/mProcess"
-            android:onClick="onClick"
-            android:text="@string/process"/>
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/mStop"
-            android:onClick="onClick"
-            android:text="@string/stop"/>
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:id="@+id/mPlay"
             android:onClick="onClick"
             android:text="@string/play"/>

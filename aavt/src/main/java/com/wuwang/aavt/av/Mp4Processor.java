@@ -66,7 +66,7 @@ public class Mp4Processor {
     private int mVideoTextureId;        //原始视频图像的纹理
     private SurfaceTexture mVideoSurfaceTexture;    //用于接收原始视频的解码的图像流
 
-    private boolean isRenderToWindowSurface;        //是否渲染到用户设置的WindowBuffer上，用于测试
+    private boolean isRenderToWindowSurface=false;        //是否渲染到用户设置的WindowBuffer上，用于测试
     private Surface mOutputSurface;                 //视频输出的Surface
 
     private Thread mDecodeThread;
@@ -390,6 +390,8 @@ public class Mp4Processor {
         }
         while (true){
             int mOutputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncoderBufferInfo,TIME_OUT);
+
+            Log.e("Aavt","Video Encode Step mOutputIndex="+mOutputIndex);
             if(mOutputIndex>=0){
                 ByteBuffer buffer=getOutputBuffer(mVideoEncoder,mOutputIndex);
                 if(mVideoEncoderBufferInfo.size>0){
@@ -449,8 +451,8 @@ public class Mp4Processor {
         if(!isRenderToWindowSurface){
             videoEncodeStep(true);
         }
-        mEGLHelper.destroyGLES();
         mRenderer.destroy();
+        mEGLHelper.destroyGLES();
     }
 
     public long getPresentationTime(){

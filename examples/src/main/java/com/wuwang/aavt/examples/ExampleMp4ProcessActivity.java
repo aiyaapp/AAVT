@@ -27,56 +27,10 @@ import java.io.IOException;
 
 public class ExampleMp4ProcessActivity extends AppCompatActivity {
 
-    private Mp4Processor mProcessor;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mp4);
-        mProcessor=new Mp4Processor();
-        mProcessor.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4");
-        mProcessor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
-            @Override
-            public void onProgress(long max, long current) {
-                Log.e("wuwang","max/current:"+max+"/"+current);
-            }
-
-            @Override
-            public void onComplete(String path) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
-
-                    }
-                });
-            }
-        });
-        mProcessor.setRenderer(new Renderer() {
-
-            Filter filter;
-
-            @Override
-            public void create() {
-                filter=new SobelFilter(getResources());
-                filter.create();
-            }
-
-            @Override
-            public void sizeChanged(int width, int height) {
-                filter.sizeChanged(width, height);
-            }
-
-            @Override
-            public void draw(int texture) {
-                filter.draw(texture);
-            }
-
-            @Override
-            public void destroy() {
-                filter.destroy();
-            }
-        });
     }
 
     public void onClick(View view){
@@ -90,20 +44,6 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                 //intent.setType("*/*");//无类型限制
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, 1);
-                break;
-            case R.id.mProcess:
-                try {
-                    mProcessor.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-            case R.id.mStop:
-                try {
-                    mProcessor.stop();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 break;
             case R.id.mPlay:
                 Intent v=new Intent(Intent.ACTION_VIEW);
