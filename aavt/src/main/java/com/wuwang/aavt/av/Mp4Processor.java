@@ -84,10 +84,12 @@ public class Mp4Processor {
     private final Object MUX_LOCK=new Object();
     private final Object PROCESS_LOCK=new Object();
 
-    private CompleteListener mCompleteListener;
+    private OnProgressListener mProgressListener;
 
     private boolean isUserWantToStop=false;
-    private long mVideoStopTimeStamp=0;
+    private long mVideoStopTimeStamp=0;     //视频停止时的时间戳，用于外部主动停止处理时，音频截取
+
+    private long mTotalVideoTime=0;     //视频的总时长
 
     public Mp4Processor(){
         mEGLHelper=new EGLHelper();
@@ -149,8 +151,8 @@ public class Mp4Processor {
         this.mOutputVideoHeight=height;
     }
 
-    public void setOnCompleteListener(CompleteListener listener){
-        this.mCompleteListener=listener;
+    public void setOnCompleteListener(OnProgressListener listener){
+        this.mProgressListener=listener;
     }
 
     private boolean prepare() throws IOException {
@@ -190,6 +192,7 @@ public class Mp4Processor {
                         return false;
                     }
                     mVideoDecoderTrack=i;
+                    mTotalVideoTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                     String rotation=mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
                     if(rotation!=null){
                         videoRotation=Integer.valueOf(rotation);
@@ -302,8 +305,8 @@ public class Mp4Processor {
                         mCodecFlag=false;
                         avStop();
                         //todo 判断是用户取消了的情况
-                        if(mCompleteListener!=null){
-                            mCompleteListener.onComplete(mOutputPath);
+                        if(mProgressListener!=null){
+                            mProgressListener.onComplete(mOutputPath);
                         }
                     }
                 });
@@ -314,6 +317,9 @@ public class Mp4Processor {
         return true;
     }
 
+    /**
+     * 等待解码线程执行完毕，异步线程同步等待
+     */
     public void waitProcessFinish() throws InterruptedException {
         if(mDecodeThread!=null&&mDecodeThread.isAlive()){
             mDecodeThread.join();
@@ -428,13 +434,15 @@ public class Mp4Processor {
                 mVideoSurfaceTexture.updateTexImage();
                 //todo 带有rotation的视频，还需要处理
                 mVideoSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
-
                 mRenderer.draw(mVideoTextureId);
                 mEGLHelper.setPresentationTime(mVideoDecoderBufferInfo.presentationTimeUs*1000);
                 if(!isRenderToWindowSurface){
                     videoEncodeStep(false);
                 }
                 mEGLHelper.swapBuffers();
+            }
+            if(mProgressListener!=null){
+                mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoDecoderBufferInfo.presentationTimeUs);
             }
             mDecodeSem.release();
         }
@@ -449,6 +457,10 @@ public class Mp4Processor {
         return mVideoDecoderBufferInfo.presentationTimeUs*1000;
     }
 
+    public long getTotalVideoTime(){
+        return mTotalVideoTime;
+    }
+
     private SurfaceTexture.OnFrameAvailableListener mFrameAvaListener=new SurfaceTexture.OnFrameAvailableListener() {
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
@@ -457,7 +469,7 @@ public class Mp4Processor {
         }
     };
 
-    public void avStop(){
+    private void avStop(){
         if(isStarted){
             if(mVideoDecoder!=null){
                 mVideoDecoder.stop();
@@ -540,7 +552,8 @@ public class Mp4Processor {
         }
     }
 
-    public interface CompleteListener{
+    public interface OnProgressListener{
+        void onProgress(long max,long current);
         void onComplete(String path);
     }
 

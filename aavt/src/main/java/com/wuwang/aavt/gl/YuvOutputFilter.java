@@ -52,6 +52,10 @@ public class YuvOutputFilter extends BaseFilter {
 
     @Override
     protected void onDraw() {
+        //fix wrong color when blend
+        boolean isBlend=GLES20.glIsEnabled(GLES20.GL_BLEND);
+        GLES20.glDisable(GLES20.GL_BLEND);
+
         GLES20.glGetIntegerv(GLES20.GL_VIEWPORT,lastViewPort,0);
         GLES20.glViewport(0,0,mWidth,mHeight);
         mFrameBuffer.bindFrameBuffer(mWidth,mHeight);
@@ -64,6 +68,9 @@ public class YuvOutputFilter extends BaseFilter {
         mExportFilter.draw(mFrameBuffer.getCacheTextureId());
         GLES20.glReadPixels(0,0,mWidth,mHeight*3/8,GLES20.GL_RGBA,GLES20.GL_UNSIGNED_BYTE,mTempBuffer);
         GLES20.glViewport(lastViewPort[0],lastViewPort[1],lastViewPort[2],lastViewPort[3]);
+        if(isBlend){
+            GLES20.glEnable(GLES20.GL_BLEND);
+        }
     }
 
     public void getOutput(byte[] data){

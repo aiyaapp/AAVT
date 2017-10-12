@@ -32,13 +32,19 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
         setContentView(R.layout.activity_mp4);
         mProcessor=new Mp4Processor();
         mProcessor.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4");
-        mProcessor.setOnCompleteListener(new Mp4Processor.CompleteListener() {
+        mProcessor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
+            @Override
+            public void onProgress(long max, long current) {
+                Log.e("wuwang","max/current:"+max+"/"+current);
+            }
+
             @Override
             public void onComplete(String path) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
+
                     }
                 });
             }
