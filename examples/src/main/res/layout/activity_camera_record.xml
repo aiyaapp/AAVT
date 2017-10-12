@@ -19,20 +19,5 @@
         android:onClick="onClick"
         android:id="@+id/mTvStart"
         android:layout_marginBottom="20dp" />
-    <TextView
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_alignParentBottom="true"
-        android:background="@drawable/tv_start_bg"
-        android:gravity="center"
-        android:textSize="12sp"
-        android:textColor="#FFFFFF"
-        android:text="@string/yuv_get"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="20dp"
-        android:clickable="true"
-        android:onClick="onClick"
-        android:id="@+id/mTvGetYUV"
-        android:layout_marginBottom="20dp" />
 
 </RelativeLayout>

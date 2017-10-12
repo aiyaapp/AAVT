@@ -49,31 +49,31 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                 });
             }
         });
-        mProcessor.setRenderer(new Renderer() {
-
-            Filter filter;
-
-            @Override
-            public void create() {
-                filter=new BlackMagicFilter(getResources());
-                filter.create();
-            }
-
-            @Override
-            public void sizeChanged(int width, int height) {
-                filter.sizeChanged(width, height);
-            }
-
-            @Override
-            public void draw(int texture) {
-                filter.draw(texture);
-            }
-
-            @Override
-            public void destroy() {
-                filter.destroy();
-            }
-        });
+//        mProcessor.setRenderer(new Renderer() {
+//
+//            Filter filter;
+//
+//            @Override
+//            public void create() {
+//                filter=new BlackMagicFilter(getResources());
+//                filter.create();
+//            }
+//
+//            @Override
+//            public void sizeChanged(int width, int height) {
+//                filter.sizeChanged(width, height);
+//            }
+//
+//            @Override
+//            public void draw(int texture) {
+//                filter.draw(texture);
+//            }
+//
+//            @Override
+//            public void destroy() {
+//                filter.destroy();
+//            }
+//        });
     }
 
     public void onClick(View view){

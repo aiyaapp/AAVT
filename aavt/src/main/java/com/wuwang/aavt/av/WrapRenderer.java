@@ -13,18 +13,14 @@ class WrapRenderer implements Renderer{
 
     private Renderer mRenderer;
     private OesFilter mFilter;
-    private FrameBuffer mFrameBuffer;
 
     public static final int TYPE_MOVE=0;
     public static final int TYPE_CAMERA=1;
 
     public WrapRenderer(Renderer renderer){
         this.mRenderer=renderer;
-        mFrameBuffer=new FrameBuffer();
         mFilter=new OesFilter();
-        if(renderer!=null){
-            MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
-        }
+        MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
     }
 
     public void setFlag(int flag){
