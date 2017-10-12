@@ -13,15 +13,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
-
-import com.wuwang.aavt.av.Mp4Processor;
-import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.Filter;
-import com.wuwang.aavt.core.Renderer;
-import com.wuwang.aavt.gl.GrayFilter;
-import com.wuwang.aavt.gl.RollFilter;
-import com.wuwang.aavt.gl.SobelFilter;
 
 import java.io.IOException;
 
