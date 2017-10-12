@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.wuwang.aavt.av.Mp4Processor;
+import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.BlackMagicFilter;
 import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
@@ -44,7 +45,6 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
-
                     }
                 });
             }

@@ -8,6 +8,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -449,8 +450,8 @@ public class Mp4Processor {
         if(!isRenderToWindowSurface){
             videoEncodeStep(true);
         }
-        mEGLHelper.destroyGLES();
         mRenderer.destroy();
+        mEGLHelper.destroyGLES();
     }
 
     public long getPresentationTime(){
@@ -553,7 +554,7 @@ public class Mp4Processor {
     }
 
     public interface OnProgressListener{
-        void onProgress(long max,long current);
+        void onProgress(long max, long current);
         void onComplete(String path);
     }
 
