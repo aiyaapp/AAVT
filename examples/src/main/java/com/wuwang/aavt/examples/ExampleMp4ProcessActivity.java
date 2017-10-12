@@ -14,6 +14,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
+import com.wuwang.aavt.av.Mp4Processor;
+
 import java.io.IOException;
 
 public class ExampleMp4ProcessActivity extends AppCompatActivity {
@@ -54,12 +56,18 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
 //                mProviders.setConfiguration(config);
 //                mProcessor.setInputPath(path);
                 try {
-                    VideoUtils.transcodeVideoFile(path, Environment.getExternalStorageDirectory().getAbsolutePath() + "/temp.mp4", 480, 640, 0, new VideoUtils.OnProgress() {
-                        @Override
-                        public void process(long time) {
+                    VideoUtils.transcodeVideoFile(path, Environment.getExternalStorageDirectory().getAbsolutePath() + "/temp.mp4", 480, 640, 3000000,
+                            new Mp4Processor.OnProgressListener() {
+                                @Override
+                                public void onProgress(long max, long current) {
+                                    Log.e("wuwang","max/current:"+max+"/"+current);
+                                }
 
-                        }
-                    });
+                                @Override
+                                public void onComplete(String path) {
+                                    Log.e("wuwang","complete:"+path);
+                                }
+                            });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

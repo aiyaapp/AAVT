@@ -17,7 +17,10 @@ import java.io.IOException;
  */
 public class VideoUtils {
 
-    public static void transcodeVideoFile(String srcVideoFile, String dstVideoFile, int dstWidth, int dstHeight, int durationUS, OnProgress onProgress) throws IOException {
+    public static int transcodeVideoFile(String srcVideoFile, String dstVideoFile, int dstWidth, int dstHeight, final int durationUS, final Mp4Processor.OnProgressListener onProgress) throws IOException {
+        if(srcVideoFile==null||dstVideoFile==null||durationUS<2000000){
+            return -1;
+        }
         final Mp4Processor processor=new Mp4Processor();
         processor.setOutputPath(dstVideoFile);
         processor.setInputPath(srcVideoFile);
@@ -25,45 +28,33 @@ public class VideoUtils {
         processor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
             @Override
             public void onProgress(long max, long current) {
-                Log.e("wuwang","max/current:"+max+"/"+current);
+                if(onProgress!=null){
+                    onProgress.onProgress(max, current);
+                    if(durationUS<=current){
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    processor.stop();
+                                    processor.waitProcessFinish();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
+                    }
+                }
             }
 
             @Override
             public void onComplete(String path) {
-                Log.e("wuwang","end:::::"+path);
-            }
-        });
-        processor.setRenderer(new Renderer() {
-
-            Filter mFilter;
-
-            @Override
-            public void create() {
-                mFilter=new BaseFilter();
-                mFilter.create();
-            }
-
-            @Override
-            public void sizeChanged(int width, int height) {
-                mFilter.sizeChanged(width, height);
-            }
-
-            @Override
-            public void draw(int texture) {
-                mFilter.draw(texture);
-                Log.e("wuwang","getPresentationTime:"+processor.getPresentationTime());
-            }
-
-            @Override
-            public void destroy() {
-                mFilter.destroy();
+                if(onProgress!=null){
+                    onProgress.onComplete(path);
+                }
             }
         });
         processor.start();
-    }
-
-    interface OnProgress{
-        void process(long time);
+        return 0;
     }
 
 }
