@@ -121,7 +121,17 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
 //                Configuration config = new Configuration();
 //                config.sourcePath = path;
 //                mProviders.setConfiguration(config);
-                mProcessor.setInputPath(path);
+//                mProcessor.setInputPath(path);
+                try {
+                    VideoUtils.transcodeVideoFile(path, Environment.getExternalStorageDirectory().getAbsolutePath() + "/temp.mp4", 480, 640, 0, new VideoUtils.OnProgress() {
+                        @Override
+                        public void process(long time) {
+
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
