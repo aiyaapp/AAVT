@@ -34,7 +34,7 @@ import java.util.concurrent.Semaphore;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Mp4Processor {
 
-    private final int TIME_OUT=1000;
+    private final int TIME_OUT=10000;
 
     private String mInputPath;                  //输入路径
     private String mOutputPath;                 //输出路径
@@ -188,10 +188,10 @@ public class Mp4Processor {
                         mAudioEncoder.configure(audioFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
                     }*/
                 }else if(mime.startsWith("video")){
-                    //5.0以下，不能解析mp4v-es
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP&&mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
-                        return false;
-                    }
+                    //5.0以下，不能解析mp4v-es //todo 5.0以上也可能存在问题，目前还不知道原因
+//                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP&&mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
+//                        return false;
+//                    }
                     mVideoDecoderTrack=i;
                     mTotalVideoTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                     String rotation=mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
@@ -217,12 +217,12 @@ public class Mp4Processor {
                             mOutputVideoWidth=mInputVideoWidth;
                             mOutputVideoHeight=mInputVideoHeight;
                         }
-                        MediaFormat videoFormat= MediaFormat.createVideoFormat(mime,mOutputVideoWidth,mOutputVideoHeight);
+                        MediaFormat videoFormat= MediaFormat.createVideoFormat(/*mime*/"video/avc",mOutputVideoWidth,mOutputVideoHeight);
                         videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
                         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,mOutputVideoHeight*mOutputVideoWidth*5);
                         videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 24);
                         videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-                        mVideoEncoder= MediaCodec.createEncoderByType(mime);
+                        mVideoEncoder= MediaCodec.createEncoderByType(/*mime*/"video/avc");
                         mVideoEncoder.configure(videoFormat,null,null, MediaCodec.CONFIGURE_FLAG_ENCODE);
                         mOutputSurface=mVideoEncoder.createInputSurface();
                         Bundle bundle=new Bundle();
@@ -391,6 +391,7 @@ public class Mp4Processor {
         }
         while (true){
             int mOutputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncoderBufferInfo,TIME_OUT);
+            Log.d(Aavt.debugTag,"videoEncodeStep-------------------mOutputIndex="+mOutputIndex+"/"+mVideoEncoderBufferInfo.presentationTimeUs);
             if(mOutputIndex>=0){
                 ByteBuffer buffer=getOutputBuffer(mVideoEncoder,mOutputIndex);
                 if(mVideoEncoderBufferInfo.size>0){
@@ -436,14 +437,14 @@ public class Mp4Processor {
                 //todo 带有rotation的视频，还需要处理
                 mVideoSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
                 mRenderer.draw(mVideoTextureId);
-                mEGLHelper.setPresentationTime(mVideoDecoderBufferInfo.presentationTimeUs*1000);
+                mEGLHelper.setPresentationTime(mVideoStopTimeStamp*1000);
                 if(!isRenderToWindowSurface){
                     videoEncodeStep(false);
                 }
                 mEGLHelper.swapBuffers();
             }
             if(mProgressListener!=null){
-                mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoDecoderBufferInfo.presentationTimeUs);
+                mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoStopTimeStamp);
             }
             mDecodeSem.release();
         }
