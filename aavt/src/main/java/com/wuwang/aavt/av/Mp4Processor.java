@@ -34,7 +34,7 @@ import java.util.concurrent.Semaphore;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Mp4Processor {
 
-    private final int TIME_OUT=10000;
+    private final int TIME_OUT=1000;
 
     private String mInputPath;                  //输入路径
     private String mOutputPath;                 //输出路径
@@ -358,6 +358,7 @@ public class Mp4Processor {
                 int ret = mExtractor.readSampleData(buffer, 0);
                 if (ret != -1) {
                     mVideoStopTimeStamp=mExtractor.getSampleTime();
+                    Log.d(Aavt.debugTag,"mVideoStopTimeStamp:"+mVideoStopTimeStamp);
                     mVideoDecoder.queueInputBuffer(mInputIndex, 0, ret, mVideoStopTimeStamp, mExtractor.getSampleFlags());
                 }
                 isVideoExtractorEnd = !mExtractor.advance();
@@ -368,6 +369,7 @@ public class Mp4Processor {
             if(mOutputIndex>=0){
                 try {
                     Log.d(Aavt.debugTag," mDecodeSem.acquire ");
+                    mSem.release();
                     if(!isUserWantToStop){
                         mDecodeSem.acquire();
                     }
@@ -414,7 +416,7 @@ public class Mp4Processor {
 
     private void glRunnable(){
         mSem=new Semaphore(0);
-        mDecodeSem=new Semaphore(1);
+        mDecodeSem=new Semaphore(0);
         mEGLHelper.setSurface(mOutputSurface);
         boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
         if(!ret)return;
@@ -436,14 +438,14 @@ public class Mp4Processor {
                 //todo 带有rotation的视频，还需要处理
                 mVideoSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
                 mRenderer.draw(mVideoTextureId);
-                mEGLHelper.setPresentationTime(mVideoStopTimeStamp*1000);
+                mEGLHelper.setPresentationTime(mVideoDecoderBufferInfo.presentationTimeUs*1000);
                 if(!isRenderToWindowSurface){
                     videoEncodeStep(false);
                 }
                 mEGLHelper.swapBuffers();
             }
             if(mProgressListener!=null){
-                mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoStopTimeStamp);
+                mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoDecoderBufferInfo.presentationTimeUs);
             }
             mDecodeSem.release();
         }
@@ -466,7 +468,7 @@ public class Mp4Processor {
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
             Log.e(Aavt.debugTag,"mSem.release ");
-            mSem.release();
+//            mSem.release();
         }
     };
 
