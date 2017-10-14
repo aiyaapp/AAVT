@@ -56,7 +56,7 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
 //                mProviders.setConfiguration(config);
 //                mProcessor.setInputPath(path);
                 try {
-                    VideoUtils.transcodeVideoFile(path, Environment.getExternalStorageDirectory().getAbsolutePath() + "/temp.mp4", 480, 640, 3000000,
+                    VideoUtils.transcodeVideoFile(path, Environment.getExternalStorageDirectory().getAbsolutePath() + "/temp.mp4", 540, 960, 3000000,
                             new Mp4Processor.OnProgressListener() {
                                 @Override
                                 public void onProgress(long max, long current) {
