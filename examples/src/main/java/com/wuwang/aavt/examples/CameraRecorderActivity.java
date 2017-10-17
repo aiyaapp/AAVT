@@ -1,6 +1,7 @@
 package com.wuwang.aavt.examples;
 
 import android.content.Intent;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.RollFilter;
 import com.wuwang.aavt.gl.SobelFilter;
 import com.wuwang.aavt.gl.YuvOutputFilter;
+import com.wuwang.aavt.media.Mp4Maker;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.io.File;
@@ -35,13 +37,14 @@ import java.util.Arrays;
 
 public class CameraRecorderActivity extends AppCompatActivity implements Renderer {
 
-    private CameraRecorder mCameraRecord;
+//    private CameraRecorder mCameraRecord;
     private SurfaceView mSurfaceView;
     private Camera mCamera;
     private TextView mTvStart;
     private boolean isStart=false;
     private Filter mFilter;
     private int mCameraWidth,mCameraHeight;
+    private Mp4Maker mMp4Maker;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,40 +52,48 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
         mFilter= new BeautyFilter(getResources()).setBeautyLevel(5);
-        mCameraRecord=new CameraRecorder();
+//        mCameraRecord=new CameraRecorder();
 
-        mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
+//        mCameraRecord.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4");
+        mMp4Maker=new Mp4Maker();
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 mCamera=Camera.open(1);
-                mCameraRecord.setOutputSurface(holder.getSurface());
-                mCameraRecord.setOutputSize(480, 640);
-                mCameraRecord.setRenderer(CameraRecorderActivity.this);
+//                mCameraRecord.setOutputSurface(holder.getSurface());
+//                mCameraRecord.setOutputSize(480, 640);
+//                mCameraRecord.setRenderer(CameraRecorderActivity.this);
+                mMp4Maker.setSourceSize(mCamera.getParameters().getPreviewSize().height,mCamera.getParameters().getPreviewSize().width);
+                mMp4Maker.setPreviewSurface(holder.getSurface());
+                mMp4Maker.setRenderer(CameraRecorderActivity.this);
+                mMp4Maker.create();
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                mCameraRecord.setPreviewSize(width,height);
-                mCameraRecord.startPreview();
+//                mCameraRecord.setPreviewSize(width,height);
+//                mCameraRecord.startPreview();
+                mMp4Maker.setPreviewSize(width, height);
+                mMp4Maker.startPreview();
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 if(isStart){
                     isStart=false;
-                    try {
-                        mCameraRecord.stopRecord();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        mCameraRecord.stopRecord();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     mTvStart.setText("开始");
                 }
-                try {
-                    mCameraRecord.stopPreview();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    mCameraRecord.stopPreview();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+                mMp4Maker.release();
                 if(mCamera!=null){
                     mCamera.stopPreview();
                     mCamera.release();
@@ -104,17 +115,17 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
                 isStart=!isStart;
                 mTvStart.setText(isStart?"停止":"开始");
                 if(isStart){
-                    try {
-                        mCameraRecord.startRecord();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        mCameraRecord.startRecord();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
                 }else{
-                    try {
-                        mCameraRecord.stopRecord();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        mCameraRecord.stopRecord();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     Intent v=new Intent(Intent.ACTION_VIEW);
                     v.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp_cam.mp4"),"video/mp4");
                     startActivity(v);
@@ -129,7 +140,20 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
     @Override
     public void create() {
         try {
-            mCamera.setPreviewTexture(mCameraRecord.createInputSurfaceTexture());
+            final SurfaceTexture surface=mMp4Maker.getInputTexture();
+            mCamera.setPreviewTexture(surface);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    surface.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+                        @Override
+                        public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                            Log.e("wuwang","surface onFrameAvailable");
+                            mMp4Maker.requestRender();
+                        }
+                    });
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -177,6 +201,8 @@ public class CameraRecorderActivity extends AppCompatActivity implements Rendere
             }
             mGetYUVFlag=false;
         }
+
+        Log.e("wuwang","draw"+ texture);
         mFilter.draw(texture);
 //        byte[] data=new byte[width*height*3/2];
 //        mYuvFilter.getOutput(data);

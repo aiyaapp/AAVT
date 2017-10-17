@@ -22,7 +22,12 @@ public class VideoUtils {
         processor.setOutputPath(dstVideoFile);
         processor.setInputPath(srcVideoFile);
         processor.setOutputSize(dstWidth,dstHeight);
-        processor.setOnCompleteListener(new Mp4Processor.CompleteListener() {
+        processor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
+            @Override
+            public void onProgress(long max, long current) {
+
+            }
+
             @Override
             public void onComplete(String path) {
                 Log.e("wuwang","end:::::"+path);
