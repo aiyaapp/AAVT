@@ -145,10 +145,9 @@ public abstract class Filter implements Renderer {
 
     @Override
     public void sizeChanged(int width, int height) {
-        onSizeChanged(width, height);
         this.mWidth=width;
         this.mHeight=height;
-
+        onSizeChanged(width, height);
         mFrameTemp.destroyFrameBuffer();
     }
 

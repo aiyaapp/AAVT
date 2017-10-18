@@ -67,10 +67,10 @@ public class CameraRecorder {
     private int mInputTextureId;
     private EGLSurface mEGLEncodeSurface=null;
 
-    private int mPreviewWidth=0;
-    private int mPreviewHeight=0;
-    private int mOutputWidth=0;
-    private int mOutputHeight=0;
+    private int mPreviewWidth=0;                //预览的宽度
+    private int mPreviewHeight=0;               //预览的高度
+    private int mOutputWidth=0;                 //输出的宽度
+    private int mOutputHeight=0;                //输出的高度
 
     private boolean isRecordStarted=false;
     private boolean isRecordVideoStarted=false;
@@ -90,6 +90,7 @@ public class CameraRecorder {
         mAudioEncodeBufferInfo=new MediaCodec.BufferInfo();
         mVideoEncodeBufferInfo=new MediaCodec.BufferInfo();
     }
+
 
     public void setOutputPath(String path){
         this.mOutputPath=path;

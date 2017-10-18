@@ -3,15 +3,11 @@ package com.wuwang.aavt.gl;
 import android.content.res.Resources;
 import android.opengl.GLES20;
 
-/**
- * Created by aiya on 2017/9/25.
- */
-
 public class RollFilter extends BaseFilter {
 
-    private int mXRollTime=600;
-    private int mYRollTime=600;
-    private long mStartTime=0;
+    private int mXRollTime=10;
+    private int mYRollTime=10;
+    private int mFrameCount=0;
 
     public RollFilter(Resources resource) {
         super(resource);
@@ -29,19 +25,18 @@ public class RollFilter extends BaseFilter {
     @Override
     protected void onCreate() {
         super.onCreate();
-        mStartTime=0;
+        mFrameCount=0;
     }
 
     @Override
     protected void onDraw() {
-        if(mStartTime==0){
-            mStartTime=System.currentTimeMillis();
+        mFrameCount++;
+        if(mFrameCount>=(mXRollTime+mYRollTime)){
+            mFrameCount=0;
         }
-        long countTime=System.currentTimeMillis()-mStartTime;
-        int sampleTime= (int) (countTime%(mXRollTime+mYRollTime));
-        if(sampleTime<mXRollTime){
+        if(mFrameCount<mXRollTime){
             //todo x方向滚动
-            int shift= (sampleTime*mWidth/mXRollTime)/2;
+            int shift= (mFrameCount*mWidth/mXRollTime)/2;
             for (int i=0;i<3;i++){
                 GLES20.glViewport(mWidth*i/2-shift,0,mWidth/2,mHeight/2);
                 super.onDraw();
@@ -50,7 +45,7 @@ public class RollFilter extends BaseFilter {
             }
         }else{
             //todo y方向滚动
-            int shift= (mHeight-(sampleTime-mXRollTime)*mHeight/mYRollTime)/2;
+            int shift= (mHeight-(mFrameCount-mXRollTime)*mHeight/mYRollTime)/2;
             for (int i=0;i<3;i++){
                 GLES20.glViewport(0,mHeight*i/2-shift,mWidth/2,mHeight/2);
                 super.onDraw();

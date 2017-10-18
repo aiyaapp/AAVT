@@ -8,6 +8,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -187,10 +188,10 @@ public class Mp4Processor {
                         mAudioEncoder.configure(audioFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
                     }*/
                 }else if(mime.startsWith("video")){
-                    //5.0以下，不能解析mp4v-es
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP&&mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
-                        return false;
-                    }
+                    //5.0以下，不能解析mp4v-es //todo 5.0以上也可能存在问题，目前还不知道原因
+//                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP&&mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
+//                        return false;
+//                    }
                     mVideoDecoderTrack=i;
                     mTotalVideoTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                     String rotation=mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
@@ -216,12 +217,12 @@ public class Mp4Processor {
                             mOutputVideoWidth=mInputVideoWidth;
                             mOutputVideoHeight=mInputVideoHeight;
                         }
-                        MediaFormat videoFormat= MediaFormat.createVideoFormat(mime,mOutputVideoWidth,mOutputVideoHeight);
+                        MediaFormat videoFormat= MediaFormat.createVideoFormat(/*mime*/"video/avc",mOutputVideoWidth,mOutputVideoHeight);
                         videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
                         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,mOutputVideoHeight*mOutputVideoWidth*5);
                         videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 24);
                         videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-                        mVideoEncoder= MediaCodec.createEncoderByType(mime);
+                        mVideoEncoder= MediaCodec.createEncoderByType(/*mime*/"video/avc");
                         mVideoEncoder.configure(videoFormat,null,null, MediaCodec.CONFIGURE_FLAG_ENCODE);
                         mOutputSurface=mVideoEncoder.createInputSurface();
                         Bundle bundle=new Bundle();
@@ -357,6 +358,7 @@ public class Mp4Processor {
                 int ret = mExtractor.readSampleData(buffer, 0);
                 if (ret != -1) {
                     mVideoStopTimeStamp=mExtractor.getSampleTime();
+                    Log.d(Aavt.debugTag,"mVideoStopTimeStamp:"+mVideoStopTimeStamp);
                     mVideoDecoder.queueInputBuffer(mInputIndex, 0, ret, mVideoStopTimeStamp, mExtractor.getSampleFlags());
                 }
                 isVideoExtractorEnd = !mExtractor.advance();
@@ -367,6 +369,7 @@ public class Mp4Processor {
             if(mOutputIndex>=0){
                 try {
                     Log.d(Aavt.debugTag," mDecodeSem.acquire ");
+                    mSem.release();
                     if(!isUserWantToStop){
                         mDecodeSem.acquire();
                     }
@@ -390,6 +393,7 @@ public class Mp4Processor {
         }
         while (true){
             int mOutputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncoderBufferInfo,TIME_OUT);
+            Log.d(Aavt.debugTag,"videoEncodeStep-------------------mOutputIndex="+mOutputIndex+"/"+mVideoEncoderBufferInfo.presentationTimeUs);
             if(mOutputIndex>=0){
                 ByteBuffer buffer=getOutputBuffer(mVideoEncoder,mOutputIndex);
                 if(mVideoEncoderBufferInfo.size>0){
@@ -413,7 +417,7 @@ public class Mp4Processor {
 
     private void glRunnable(){
         mSem=new Semaphore(0);
-        mDecodeSem=new Semaphore(1);
+        mDecodeSem=new Semaphore(0);
         mEGLHelper.setSurface(mOutputSurface);
         boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
         if(!ret)return;
@@ -449,8 +453,8 @@ public class Mp4Processor {
         if(!isRenderToWindowSurface){
             videoEncodeStep(true);
         }
-        mEGLHelper.destroyGLES();
         mRenderer.destroy();
+        mEGLHelper.destroyGLES();
     }
 
     public long getPresentationTime(){
@@ -465,7 +469,7 @@ public class Mp4Processor {
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
             Log.e(Aavt.debugTag,"mSem.release ");
-            mSem.release();
+//            mSem.release();
         }
     };
 
@@ -553,7 +557,7 @@ public class Mp4Processor {
     }
 
     public interface OnProgressListener{
-        void onProgress(long max,long current);
+        void onProgress(long max, long current);
         void onComplete(String path);
     }
 

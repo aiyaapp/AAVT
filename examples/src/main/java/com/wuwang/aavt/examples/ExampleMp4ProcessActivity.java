@@ -17,11 +17,9 @@ import android.widget.Toast;
 
 import com.wuwang.aavt.av.Mp4Processor;
 import com.wuwang.aavt.gl.BaseFilter;
+import com.wuwang.aavt.gl.BlackMagicFilter;
 import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
-import com.wuwang.aavt.gl.GrayFilter;
-import com.wuwang.aavt.gl.RollFilter;
-import com.wuwang.aavt.gl.SobelFilter;
 
 import java.io.IOException;
 
@@ -47,36 +45,35 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
-
                     }
                 });
             }
         });
-        mProcessor.setRenderer(new Renderer() {
-
-            Filter filter;
-
-            @Override
-            public void create() {
-                filter=new SobelFilter(getResources());
-                filter.create();
-            }
-
-            @Override
-            public void sizeChanged(int width, int height) {
-                filter.sizeChanged(width, height);
-            }
-
-            @Override
-            public void draw(int texture) {
-                filter.draw(texture);
-            }
-
-            @Override
-            public void destroy() {
-                filter.destroy();
-            }
-        });
+//        mProcessor.setRenderer(new Renderer() {
+//
+//            Filter filter;
+//
+//            @Override
+//            public void create() {
+//                filter=new BlackMagicFilter(getResources());
+//                filter.create();
+//            }
+//
+//            @Override
+//            public void sizeChanged(int width, int height) {
+//                filter.sizeChanged(width, height);
+//            }
+//
+//            @Override
+//            public void draw(int texture) {
+//                filter.draw(texture);
+//            }
+//
+//            @Override
+//            public void destroy() {
+//                filter.destroy();
+//            }
+//        });
     }
 
     public void onClick(View view){
