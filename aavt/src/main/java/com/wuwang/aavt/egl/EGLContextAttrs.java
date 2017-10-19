@@ -9,9 +9,20 @@ public class EGLContextAttrs {
 
     private int version=2;
 
+    private boolean isDefault;
+
     public EGLContextAttrs version(int v){
         this.version=v;
         return this;
+    }
+
+    public EGLContextAttrs makeDefault(boolean def){
+        this.isDefault=def;
+        return this;
+    }
+
+    public boolean isDefault(){
+        return isDefault;
     }
 
     int[] build(){

@@ -9,7 +9,7 @@ import javax.microedition.khronos.egl.EGL10;
 /*
  * Created by Wuwang on 2017/10/18
  */
-public class EGLSurfaceAttrs {
+public class EGLConfigAttrs {
 
     private int red=8;
     private int green=8;
@@ -19,40 +19,50 @@ public class EGLSurfaceAttrs {
     private int renderType=4;
     private int surfaceType= EGL10.EGL_WINDOW_BIT;
 
+    private boolean makeDefault=false;
 
-    public EGLSurfaceAttrs red(int red){
+    public EGLConfigAttrs red(int red){
         this.red=red;
         return this;
     }
 
-    public EGLSurfaceAttrs green(int green){
+    public EGLConfigAttrs green(int green){
         this.green=green;
         return this;
     }
 
-    public EGLSurfaceAttrs blue(int blue){
+    public EGLConfigAttrs blue(int blue){
         this.blue=blue;
         return this;
     }
 
-    public EGLSurfaceAttrs alpha(int alpha){
+    public EGLConfigAttrs alpha(int alpha){
         this.alpha=alpha;
         return this;
     }
 
-    public EGLSurfaceAttrs depth(int depth){
+    public EGLConfigAttrs depth(int depth){
         this.depth=depth;
         return this;
     }
 
-    public EGLSurfaceAttrs renderType(int type){
+    public EGLConfigAttrs renderType(int type){
         this.renderType=type;
         return this;
     }
 
-    public EGLSurfaceAttrs surfaceType(int type){
+    public EGLConfigAttrs surfaceType(int type){
         this.surfaceType=type;
         return this;
+    }
+
+    public EGLConfigAttrs makeDefault(boolean def){
+        this.makeDefault=def;
+        return this;
+    }
+
+    public boolean isDefault(){
+        return makeDefault;
     }
 
     int[] build(){

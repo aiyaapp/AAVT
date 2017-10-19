@@ -23,6 +23,9 @@ public class EGLHelper {
 
     private boolean isDebug=true;
     private EGLDisplay mEGLDisplay;
+    private EGLConfig mEGLConfig;
+    private EGLContext mEGLContext;
+    private EGLSurface mEGLSurface;
 
     public EGLHelper(int display){
         changeDisplay(display);
@@ -42,50 +45,74 @@ public class EGLHelper {
         log(EGL14.eglQueryString(mEGLDisplay, EGL14.EGL_EXTENSIONS));
     }
 
-    public EGLConfig getConfig(EGLSurfaceAttrs attrs){
+    public EGLConfig getConfig(EGLConfigAttrs attrs){
         EGLConfig[] configs = new EGLConfig[1];
         int[] configNum = new int[1];
         EGL14.eglChooseConfig(mEGLDisplay,attrs.build(),0,configs,0,1,configNum,0);
         //选择的过程可能出现多个，也可能一个都没有，这里只用一个
         if(configNum[0]>0){
+            if(attrs.isDefault()){
+                mEGLConfig=configs[0];
+            }
             return configs[0];
         }
         return null;
     }
 
+    public EGLConfig getDefaultConfig(){
+        return mEGLConfig;
+    }
+
+    public EGLSurface getDefaultSurface(){
+        return mEGLSurface;
+    }
+
+    public EGLContext getDefaultContext(){
+        return mEGLContext;
+    }
+
     public EGLContext createContext(EGLConfig config,EGLContext share,EGLContextAttrs attrs){
-        return EGL14.eglCreateContext(mEGLDisplay,config,share,attrs.build(),0);
+        EGLContext context= EGL14.eglCreateContext(mEGLDisplay,config,share,attrs.build(),0);
+        if(attrs.isDefault()){
+            mEGLContext=context;
+        }
+        return context;
     }
 
     public EGLSurface createWindowSurface(EGLConfig config,Object surface){
         return EGL14.eglCreateWindowSurface(mEGLDisplay,config,surface,new int[]{EGL14.EGL_NONE},0);
     }
 
+    public EGLSurface createWindowSurface(Object surface){
+        mEGLSurface=EGL14.eglCreateWindowSurface(mEGLDisplay,mEGLConfig,surface,new int[]{EGL14.EGL_NONE},0);
+        return mEGLSurface;
+    }
+
     public EGLSurface createPBufferSurface(EGLConfig config,int width,int height){
         return EGL14.eglCreatePbufferSurface(mEGLDisplay,config,new int[]{EGL14.EGL_WIDTH,width,EGL14.EGL_HEIGHT,height,EGL14.EGL_NONE},0);
     }
 
-    public EGLSurface createGLESWithSurface(EGLSurfaceAttrs attrs,EGLContextAttrs ctxAttrs,Object surface){
-        EGLConfig config=getConfig(attrs.surfaceType(EGL14.EGL_WINDOW_BIT));
+    public boolean createGLESWithSurface(EGLConfigAttrs attrs,EGLContextAttrs ctxAttrs,Object surface){
+        EGLConfig config=getConfig(attrs.surfaceType(EGL14.EGL_WINDOW_BIT).makeDefault(true));
         if(config==null){
             log("getConfig failed : "+EGL14.eglGetError());
-            return null;
+            return false;
         }
-        EGLContext eglContext=createContext(config,EGL14.EGL_NO_CONTEXT,ctxAttrs);
+        EGLContext eglContext=createContext(config,EGL14.EGL_NO_CONTEXT,ctxAttrs.makeDefault(true));
         if(eglContext==EGL14.EGL_NO_CONTEXT){
             log("createContext failed : "+EGL14.eglGetError());
-            return null;
+            return false;
         }
-        EGLSurface eglSurface=createWindowSurface(config,surface);
+        EGLSurface eglSurface=createWindowSurface(surface);
         if(eglSurface==EGL14.EGL_NO_SURFACE){
             log("createWindowSurface failed : "+EGL14.eglGetError());
-            return null;
+            return false;
         }
         if(!EGL14.eglMakeCurrent(mEGLDisplay,eglSurface,eglSurface,eglContext)){
             log("eglMakeCurrent failed : "+EGL14.eglGetError());
-            return null;
+            return false;
         }
-        return eglSurface;
+        return true;
     }
 
     public boolean makeCurrent(EGLSurface draw,EGLSurface read,EGLContext context){
@@ -95,12 +122,24 @@ public class EGLHelper {
         return true;
     }
 
+    public boolean makeCurrent(EGLSurface surface,EGLContext context){
+        return makeCurrent(surface,surface,context);
+    }
+
+    public boolean makeCurrent(EGLSurface surface){
+        return makeCurrent(surface,mEGLContext);
+    }
+
+    public boolean makeCurrent(){
+        return makeCurrent(mEGLSurface,mEGLContext);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void setPresentationTime(EGLSurface surface, long time){
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay,surface,time);
     }
 
-    public EGLSurface createGLESWithPBuffer(EGLSurfaceAttrs attrs,EGLContextAttrs ctxAttrs,int width,int height){
+    public EGLSurface createGLESWithPBuffer(EGLConfigAttrs attrs,EGLContextAttrs ctxAttrs,int width,int height){
         EGLConfig config=getConfig(attrs.surfaceType(EGL14.EGL_PBUFFER_BIT));
         if(config==null){
             log("getConfig failed : "+EGL14.eglGetError());
