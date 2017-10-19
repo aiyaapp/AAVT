@@ -14,10 +14,24 @@
         android:gravity="center"
         android:textSize="16sp"
         android:textColor="#FFFFFF"
-        android:text="@string/start"
+        android:text="@string/start_show"
         android:clickable="true"
         android:onClick="onClick"
-        android:id="@+id/mTvStart"
+        android:id="@+id/mTvShow"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/tv_start_bg"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:text="@string/start_rec"
+        android:clickable="true"
+        android:onClick="onClick"
+        android:id="@+id/mTvRec"
         android:layout_marginBottom="20dp" />
 
 </RelativeLayout>

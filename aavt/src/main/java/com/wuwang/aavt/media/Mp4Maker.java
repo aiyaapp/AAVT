@@ -1,4 +1,4 @@
-package com.wuwang.aavt.av;
+package com.wuwang.aavt.media;
 
 import android.annotation.TargetApi;
 import android.graphics.SurfaceTexture;
@@ -9,6 +9,9 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.media.MediaRecorder;
+import android.opengl.EGL14;
+import android.opengl.EGLConfig;
+import android.opengl.EGLContext;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.os.Build;
@@ -18,38 +21,38 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.wuwang.aavt.Aavt;
-import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
+import com.wuwang.aavt.egl.EGLContextAttrs;
+import com.wuwang.aavt.egl.EGLHelper;
+import com.wuwang.aavt.egl.EGLSurfaceAttrs;
 import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.EGLHelper;
+import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.gl.FrameBuffer;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class CameraRecorder {
+public class Mp4Maker {
 
     private final int TIME_OUT=1000;
+    private boolean isDebug=true;
 
     private MediaCodec mVideoEncoder;
     private MediaCodec mAudioEncoder;
-    private AudioRecord mAudioRecord;
+//    private AudioRecord mAudioRecord;
+    private Stuffer mAudioStuffer;
     private MediaMuxer mMuxer;
 
-    private int mRecordBufferSize=0;
-    private int mRecordSampleRate=48000;   //音频采样率
-    private int mRecordChannelConfig= AudioFormat.CHANNEL_IN_STEREO;   //音频录制通道,默认为立体声
-    private int mRecordAudioFormat=AudioFormat.ENCODING_PCM_16BIT; //音频录制格式，默认为PCM16Bit
 
     private SurfaceTexture mInputTexture;
     private Surface mOutputSurface;
     private Surface mEncodeSurface;
-//    private EGLHelper mEncodeEGLHelper;
-    private EGLHelper mShowEGLHelper;
+
     private Configuration mConfig;
     private String mOutputPath;
 
@@ -61,21 +64,28 @@ public class CameraRecorder {
     private boolean mGLThreadFlag=false;
     private Thread mGLThread;
     private WrapRenderer mRenderer;
-    private Semaphore mSem;
-    private Semaphore mEncodeSem;
+    private Semaphore mShowSem;
     private boolean isMuxStarted=false;
     private int mInputTextureId;
     private EGLSurface mEGLEncodeSurface=null;
+    private EGLSurface mEGLPreviewSurface=null;
 
     private int mPreviewWidth=0;                //预览的宽度
     private int mPreviewHeight=0;               //预览的高度
     private int mOutputWidth=0;                 //输出的宽度
     private int mOutputHeight=0;                //输出的高度
+    private int mSourceWidth=0;
+    private int mSourceHeight=0;
 
     private boolean isRecordStarted=false;
     private boolean isRecordVideoStarted=false;
     private boolean isRecordAudioStarted=false;
     private boolean isTryStopAudio=false;
+
+    private boolean isPreviewStarted=false;
+
+    private float[] mRecMatrix=MatrixUtils.getOriginalMatrix();
+    private float[] mPreMatrix=MatrixUtils.getOriginalMatrix();
 
     private Thread mAudioThread;
     private final Object VIDEO_LOCK=new Object();
@@ -83,14 +93,11 @@ public class CameraRecorder {
 
     private final static long BASE_TIME=System.currentTimeMillis();
 
-    public CameraRecorder(){
-        mShowEGLHelper=new EGLHelper();
-//        mEncodeEGLHelper=new EGLHelper();
-        mSem=new Semaphore(0);
+    public Mp4Maker(){
+        mShowSem=new Semaphore(0);
         mAudioEncodeBufferInfo=new MediaCodec.BufferInfo();
         mVideoEncodeBufferInfo=new MediaCodec.BufferInfo();
     }
-
 
     public void setOutputPath(String path){
         this.mOutputPath=path;
@@ -100,15 +107,28 @@ public class CameraRecorder {
         this.mConfig=new Configuration(width,height);
         this.mOutputWidth=width;
         this.mOutputHeight=height;
+        MatrixUtils.getMatrix(mRecMatrix,MatrixUtils.TYPE_CENTERCROP,mSourceWidth,mSourceHeight,mOutputWidth,mOutputHeight);
     }
 
     public void setPreviewSize(int width,int height){
         this.mPreviewWidth=width;
         this.mPreviewHeight=height;
+        MatrixUtils.getMatrix(mPreMatrix,MatrixUtils.TYPE_CENTERCROP,mSourceWidth,mSourceHeight,mPreviewWidth,mPreviewHeight);
+    }
+
+    public void setSourceSize(int width,int height){
+        this.mSourceWidth=width;
+        this.mSourceHeight=height;
+        MatrixUtils.getMatrix(mPreMatrix,MatrixUtils.TYPE_CENTERCROP,mSourceWidth,mSourceHeight,mPreviewWidth,mPreviewHeight);
+        MatrixUtils.getMatrix(mRecMatrix,MatrixUtils.TYPE_CENTERCROP,mSourceWidth,mSourceHeight,mOutputWidth,mOutputHeight);
+    }
+
+    public void setAudioStuffer(Stuffer stuffer){
+        this.mAudioStuffer=stuffer;
     }
 
     public SurfaceTexture createInputSurfaceTexture(){
-        mInputTextureId=mShowEGLHelper.createTextureID();
+        mInputTextureId= EGLHelper.createTextureID();
         mInputTexture=new SurfaceTexture(mInputTextureId);
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -116,7 +136,7 @@ public class CameraRecorder {
                 mInputTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
                     @Override
                     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                        mSem.release();
+                        mShowSem.release();
                     }
                 });
             }
@@ -130,32 +150,41 @@ public class CameraRecorder {
 
     public void setOutputSurface(Surface surface){
         this.mOutputSurface=surface;
+        if(this.mOutputSurface==null){
+            mEGLPreviewSurface=null;
+            stopPreview();
+        }
     }
 
     public void setRenderer(Renderer renderer){
         mRenderer=new WrapRenderer(renderer);
     }
 
-    public void startPreview(){
-        synchronized (REC_LOCK){
-            Log.d(Aavt.debugTag,"CameraRecorder startPreview");
-            mSem.drainPermits();
-            mGLThreadFlag=true;
-            mGLThread=new Thread(mGLRunnable);
-            mGLThread.start();
-        }
+    public void create(){
+        mShowSem.drainPermits();
+        mGLThreadFlag=true;
+        mGLThread=new Thread(mGLRunnable);
+        mGLThread.start();
     }
 
-    public void stopPreview() throws InterruptedException {
+    public void destroy()  throws InterruptedException {
         synchronized (REC_LOCK){
             mGLThreadFlag=false;
-            mSem.release();
+            mShowSem.release();
             if(mGLThread!=null&&mGLThread.isAlive()){
                 mGLThread.join();
                 mGLThread=null;
             }
             Log.d(Aavt.debugTag,"CameraRecorder stopPreview");
         }
+    }
+
+    public void startPreview(){
+        isPreviewStarted=true;
+    }
+
+    public void stopPreview(){
+        isPreviewStarted=false;
     }
 
     public void startRecord() throws IOException {
@@ -173,21 +202,20 @@ public class CameraRecorder {
             mAudioEncoder.start();
             mVideoEncoder.start();
             mMuxer=new MediaMuxer(mOutputPath,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            mRecordBufferSize = AudioRecord.getMinBufferSize(mRecordSampleRate,
-                    mRecordChannelConfig, mRecordAudioFormat)*2;
 //        buffer=new byte[bufferSize];
-            mAudioRecord=new AudioRecord(MediaRecorder.AudioSource.MIC,mRecordSampleRate,mRecordChannelConfig,
-                    mRecordAudioFormat,mRecordBufferSize);
-
-            mAudioThread=new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    mAudioRecord.startRecording();
-                    while (!audioEncodeStep(isTryStopAudio));
-                    mAudioRecord.stop();
-                }
-            });
-            mAudioThread.start();
+            if(mAudioStuffer!=null){
+                mAudioThread=new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mAudioStuffer.start();
+                        while (!audioEncodeStep(isTryStopAudio));
+                        mAudioStuffer.stop();
+                    }
+                });
+                mAudioThread.start();
+            }else{
+                isRecordVideoStarted=true;
+            }
             isRecordAudioStarted=true;
         }
     }
@@ -197,7 +225,9 @@ public class CameraRecorder {
             if(isRecordStarted){
                 isTryStopAudio=true;
                 if(isRecordAudioStarted){
-                    mAudioThread.join();
+                    if(mAudioThread!=null){
+                        mAudioThread.join();
+                    }
                     isRecordAudioStarted=false;
                 }
                 synchronized (VIDEO_LOCK){
@@ -241,16 +271,11 @@ public class CameraRecorder {
     private Runnable mGLRunnable=new Runnable() {
         @Override
         public void run() {
-            if(mOutputSurface==null){
-                Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : outputSurface==null");
-                return;
-            }
-            if(mPreviewWidth<=0||mPreviewHeight<=0){
-                Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : Preview Size==0");
-                return;
-            }
-            mShowEGLHelper.setSurface(mOutputSurface);
-            boolean ret=mShowEGLHelper.createGLES(mPreviewWidth,mPreviewHeight);
+            EGLHelper egl=new EGLHelper();
+            EGLConfig eglConfig=egl.getConfig(new EGLSurfaceAttrs());
+            EGLSurface eglSurface=egl.createWindowSurface(eglConfig,new SurfaceTexture(1));
+            EGLContext eglContext=egl.createContext(eglConfig, EGL14.EGL_NO_CONTEXT,new EGLContextAttrs());
+            boolean ret=egl.makeCurrent(eglSurface,eglSurface,eglContext);
             if(!ret){
                 Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : createGLES failed");
                 return;
@@ -262,26 +287,17 @@ public class CameraRecorder {
             mRenderer.create();
             int[] t=new int[1];
             GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING,t,0);
-            mRenderer.sizeChanged(mPreviewWidth,mPreviewHeight);
+            mRenderer.sizeChanged(mSourceWidth,mSourceHeight);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,t[0]);
 
             Filter mShowFilter=new BaseFilter();
-            Filter mRecFilter=new BaseFilter();
-            MatrixUtils.flip(mShowFilter.getVertexMatrix(),false,true);
             mShowFilter.create();
-            mShowFilter.sizeChanged(mPreviewWidth,mPreviewHeight);
+            mShowFilter.sizeChanged(mSourceWidth,mSourceHeight);
 
-            MatrixUtils.getMatrix(mRecFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,
-                    mPreviewWidth,mPreviewHeight,
-                    mOutputWidth,mOutputHeight);
-            MatrixUtils.flip(mRecFilter.getVertexMatrix(),false,true);
-            mRecFilter.create();
-            mRecFilter.sizeChanged(mOutputWidth,mOutputHeight);
-
-            FrameBuffer mEncodeFrameBuffer=new FrameBuffer();
+            FrameBuffer tempFrameBuffer=new FrameBuffer();
             while (mGLThreadFlag){
                 try {
-                    mSem.acquire();
+                    mShowSem.acquire();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -289,36 +305,45 @@ public class CameraRecorder {
                     long time=(System.currentTimeMillis()-BASE_TIME)*1000;
                     mInputTexture.updateTexImage();
                     mInputTexture.getTransformMatrix(mRenderer.getTextureMatrix());
+                    if (isPreviewStarted) {
+                        if(mEGLPreviewSurface==null){
+                            mEGLPreviewSurface=egl.createWindowSurface(eglConfig,mOutputSurface);
+                        }
+                        egl.makeCurrent(mEGLPreviewSurface,mEGLPreviewSurface,eglContext);
+                        tempFrameBuffer.bindFrameBuffer(mSourceWidth,mSourceHeight);
+                        GLES20.glViewport(0,0,mSourceWidth,mSourceHeight);
+                        mRenderer.draw(mInputTextureId);
+                        tempFrameBuffer.unBindFrameBuffer();
+                        GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
+                        log(Arrays.toString(mPreMatrix));
+                        mShowFilter.setVertexMatrix(mPreMatrix);
+                        mShowFilter.draw(tempFrameBuffer.getCacheTextureId());
+                        egl.swapBuffers(mEGLPreviewSurface);
+                    }
                     synchronized (VIDEO_LOCK){
                         if(isRecordVideoStarted){
                             if(mEGLEncodeSurface==null){
-                                mEGLEncodeSurface=mShowEGLHelper.createEGLWindowSurface(mEncodeSurface);
+                                mEGLEncodeSurface=egl.createWindowSurface(eglConfig,mEncodeSurface);
                             }
-                            mShowEGLHelper.makeCurrent(mEGLEncodeSurface);
-                            mEncodeFrameBuffer.bindFrameBuffer(mPreviewWidth,mPreviewHeight);
-                            mRenderer.draw(mInputTextureId);
-                            mEncodeFrameBuffer.unBindFrameBuffer();
+                            egl.makeCurrent(mEGLEncodeSurface,mEGLEncodeSurface,eglContext);
+                            if(!isPreviewStarted){
+                                tempFrameBuffer.bindFrameBuffer(mSourceWidth,mSourceHeight);
+                                GLES20.glViewport(0,0,mSourceWidth,mSourceHeight);
+                                mRenderer.draw(mInputTextureId);
+                                tempFrameBuffer.unBindFrameBuffer();
+                            }
                             GLES20.glViewport(0,0,mConfig.getVideoFormat().getInteger(MediaFormat.KEY_WIDTH),
                                     mConfig.getVideoFormat().getInteger(MediaFormat.KEY_HEIGHT));
-                            mRecFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
-                            mShowEGLHelper.setPresentationTime(mEGLEncodeSurface,time*1000);
+                            mShowFilter.setVertexMatrix(mRecMatrix);
+                            mShowFilter.draw(tempFrameBuffer.getCacheTextureId());
+                            egl.setPresentationTime(mEGLEncodeSurface,time*1000);
                             videoEncodeStep(false);
-                            mShowEGLHelper.swapBuffers(mEGLEncodeSurface);
-
-                            mShowEGLHelper.makeCurrent();
-                            GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
-                            mShowFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
-                            mShowEGLHelper.setPresentationTime(0);
-                            mShowEGLHelper.swapBuffers();
-                        }else{
-                            GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
-                            mRenderer.draw(mInputTextureId);
-                            mShowEGLHelper.swapBuffers();
+                            egl.swapBuffers(mEGLEncodeSurface);
                         }
                     }
                 }
             }
-            mShowEGLHelper.destroyGLES();
+            egl.destroyGLES(eglSurface,eglContext);
         }
     };
 
@@ -356,7 +381,9 @@ public class CameraRecorder {
                 ByteBuffer buffer=getInputBuffer(mAudioEncoder,inputIndex);
                 buffer.clear();
                 long time=(System.currentTimeMillis()-BASE_TIME)*1000;
-                int length=mAudioRecord.read(buffer,mRecordBufferSize);
+                AVFrame audioFrame=new AVFrame();
+                audioFrame.mData=buffer;
+                int length=mAudioStuffer.stuff(audioFrame);
                 if(length>=0){
                     mAudioEncoder.queueInputBuffer(inputIndex,0,length,time,
                             isEnd?MediaCodec.BUFFER_FLAG_END_OF_STREAM:0);
@@ -435,6 +462,12 @@ public class CameraRecorder {
             return codec.getOutputBuffer(index);
         }else{
             return codec.getOutputBuffers()[index];
+        }
+    }
+
+    private void log(String info){
+        if(isDebug){
+            Log.d("Mp4Maker",info);
         }
     }
 

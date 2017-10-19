@@ -10,4 +10,7 @@
     <string name="start">开始</string>
     <string name="stop">停止</string>
     <string name="yuv_get">获取YUV</string>
+
+    <string name="start_show">预览</string>
+    <string name="start_rec">录制</string>
 </resources>

@@ -12,12 +12,18 @@ import com.wuwang.aavt.Aavt;
 public class FrameBuffer {
 
     private int[] mFrameTemp;
+    private int lastWidth=0,lastHeight=0;
 
     public int bindFrameBuffer(int width,int height){
         return bindFrameBuffer(width, height,false);
     }
 
     public int bindFrameBuffer(int width,int height,boolean hasRenderBuffer){
+        if(lastWidth!=width||lastHeight!=height){
+            destroyFrameBuffer();
+            this.lastWidth=width;
+            this.lastHeight=height;
+        }
         if(mFrameTemp==null){
             return createFrameBuffer(hasRenderBuffer,width,height,GLES20.GL_TEXTURE_2D,GLES20.GL_RGBA,
                     GLES20.GL_NEAREST,GLES20.GL_LINEAR,GLES20.GL_CLAMP_TO_EDGE,GLES20.GL_CLAMP_TO_EDGE);
