@@ -7,4 +7,9 @@ import com.wuwang.aavt.core.IObservable;
  */
 
 public interface IAudioConsumer extends IObservable<AVMsg>{
+
+    void start();
+
+    void stop();
+
 }

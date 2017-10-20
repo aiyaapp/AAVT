@@ -16,4 +16,8 @@ public interface IVideoConsumer extends IObservable<AVMsg> {
 
     void setOutSize(int width,int height);
 
+    void start();
+
+    void stop();
+
 }

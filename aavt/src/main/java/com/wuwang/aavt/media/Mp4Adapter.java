@@ -16,7 +16,7 @@ import java.util.concurrent.Semaphore;
  * Created by wuwang on 2017/10/19.
  */
 
-public class Mp4Util {
+public class Mp4Adapter {
 
     private IVideoProvider mVideoProvider;
     private IAudioProvider mAudioProvider;
@@ -148,7 +148,6 @@ public class Mp4Util {
         if(mVideoConsumer!=null){
             mVideoConsumer.onSurfaceFrame(egl,mSourceWidth,mSourceHeight,-1);
         }
-
 
     }
 

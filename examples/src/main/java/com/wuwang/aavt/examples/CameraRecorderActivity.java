@@ -21,7 +21,7 @@ import com.wuwang.aavt.media.AudioRecordStuffer;
 import com.wuwang.aavt.media.CameraVideoProvider;
 import com.wuwang.aavt.media.IVideoProvider;
 import com.wuwang.aavt.media.Mp4Maker;
-import com.wuwang.aavt.media.Mp4Util;
+import com.wuwang.aavt.media.Mp4Adapter;
 import com.wuwang.aavt.media.Mp4VideoProvider;
 import com.wuwang.aavt.media.ShowVideoConsumer;
 import com.wuwang.aavt.utils.MatrixUtils;
@@ -41,7 +41,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
 
     private IVideoProvider mVideoProvider;
     private ASurfaceVideoConsumer mVideoConsumer;
-    private Mp4Util mMP4Util;
+    private Mp4Adapter mMp4Adapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,11 +49,11 @@ public class CameraRecorderActivity extends AppCompatActivity{
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
         mFilter=new BeautyFilter(getResources()).setBeautyLevel(5);
-        mMP4Util=new Mp4Util();
+        mMp4Adapter=new Mp4Adapter();
         mVideoProvider=new CameraVideoProvider();//new Mp4VideoProvider();
         mVideoConsumer=new ShowVideoConsumer();
-        mMP4Util.setVideoProvider(mVideoProvider);
-        mMP4Util.setVideoConsumer(mVideoConsumer);
+        mMp4Adapter.setVideoProvider(mVideoProvider);
+        mMp4Adapter.setVideoConsumer(mVideoConsumer);
 
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -64,12 +64,12 @@ public class CameraRecorderActivity extends AppCompatActivity{
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 mVideoConsumer.setOutSize(width, height);
-                mMP4Util.start();
+                mMp4Adapter.start();
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                mMP4Util.stop();
+                mMp4Adapter.stop();
             }
         });
     }

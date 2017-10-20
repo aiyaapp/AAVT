@@ -13,10 +13,11 @@ import com.wuwang.aavt.utils.MatrixUtils;
  * Created by wuwang on 2017/10/20.
  */
 
-public class ShowVideoConsumer extends ASurfaceVideoConsumer {
+public class ShowVideoConsumer extends ASurfaceVideoConsumer{
 
     private EGLSurface mEglSurface;
     private Filter mFilter;
+    private AVMsg msg=new AVMsg(AVMsg.Type.TYPE_VIDEO_SURFACE);
 
     @Override
     public void onSurfaceFrame(EGLHelper egl, int width, int height, int texture) {
@@ -35,7 +36,17 @@ public class ShowVideoConsumer extends ASurfaceVideoConsumer {
             mFilter.draw(texture);
             egl.swapBuffers(mEglSurface);
         }
-        notify(AVMsg.VIDEO);
+        notify(msg);
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
     }
 
 }
