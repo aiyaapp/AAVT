@@ -1,10 +1,7 @@
 package com.wuwang.aavt.examples;
 
-import android.content.Intent;
 import android.hardware.Camera;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
@@ -12,25 +9,14 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.TextView;
 
-import com.wuwang.aavt.av.CameraRecorder;
+import com.wuwang.aavt.media.CameraProvider;
+import com.wuwang.aavt.media.ShowVideoProcessor;
+import com.wuwang.aavt.media.SurfaceVideoTrack;
 import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.Filter;
-import com.wuwang.aavt.core.Renderer;
-import com.wuwang.aavt.media.ASurfaceVideoConsumer;
-import com.wuwang.aavt.media.AudioRecordStuffer;
-import com.wuwang.aavt.media.CameraVideoProvider;
-import com.wuwang.aavt.media.IVideoProvider;
-import com.wuwang.aavt.media.Mp4Maker;
-import com.wuwang.aavt.media.Mp4Adapter;
-import com.wuwang.aavt.media.Mp4VideoProvider;
-import com.wuwang.aavt.media.ShowVideoConsumer;
-import com.wuwang.aavt.utils.MatrixUtils;
-
-import java.io.IOException;
 
 public class CameraRecorderActivity extends AppCompatActivity{
 
-    private Mp4Maker mMp4Maker;
     private SurfaceView mSurfaceView;
     private Camera mCamera;
     private TextView mTvPreview,mTvRecord;
@@ -39,9 +25,9 @@ public class CameraRecorderActivity extends AppCompatActivity{
     private Filter mFilter;
     private int mCameraWidth,mCameraHeight;
 
-    private IVideoProvider mVideoProvider;
-    private ASurfaceVideoConsumer mVideoConsumer;
-    private Mp4Adapter mMp4Adapter;
+    private SurfaceVideoTrack mVideoTrack;
+    private ShowVideoProcessor mVideoProcesssor;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,27 +35,27 @@ public class CameraRecorderActivity extends AppCompatActivity{
         setContentView(R.layout.activity_camera_record);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
         mFilter=new BeautyFilter(getResources()).setBeautyLevel(5);
-        mMp4Adapter=new Mp4Adapter();
-        mVideoProvider=new CameraVideoProvider();//new Mp4VideoProvider();
-        mVideoConsumer=new ShowVideoConsumer();
-        mMp4Adapter.setVideoProvider(mVideoProvider);
-        mMp4Adapter.setVideoConsumer(mVideoConsumer);
+        mVideoTrack=new SurfaceVideoTrack();
+        mVideoProcesssor=new ShowVideoProcessor();
+
+        mVideoTrack.setProcessor(mVideoProcesssor);
+        mVideoTrack.setProvider(new CameraProvider());
 
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                mVideoConsumer.setOutputSurface(holder.getSurface());
+                mVideoProcesssor.setOutputSurface(holder.getSurface());
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                mVideoConsumer.setOutSize(width, height);
-                mMp4Adapter.start();
+                mVideoProcesssor.setOutputSize(width, height);
+                mVideoTrack.start();
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                mMp4Adapter.stop();
+                mVideoTrack.stop();
             }
         });
     }

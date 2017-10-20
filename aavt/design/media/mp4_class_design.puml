@@ -1,0 +1,27 @@
+@startuml
+
+abstract MediaEntry
+abstract Track
+interface IProvider
+interface IProcessor
+
+
+abstract MediaEntry{
+addTrack(Track track);
+start()
+stop()
+}
+
+abstract Track{
+IProvider provider
+IProcessor processor
+
+setProvider(IProvider provider)
+setProcessor(IProcessor processor)
+}
+
+interface IProcessor{
+setProcessor(IProcessor next)
+}
+
+@enduml

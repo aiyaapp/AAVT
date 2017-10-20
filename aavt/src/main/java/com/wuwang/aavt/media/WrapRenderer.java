@@ -22,9 +22,6 @@ class WrapRenderer implements Renderer{
         this.mRenderer=renderer;
         mFrameBuffer=new FrameBuffer();
         mFilter=new OesFilter();
-        if(renderer!=null){
-            MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
-        }
     }
 
     public void setFlag(int flag){
@@ -32,10 +29,10 @@ class WrapRenderer implements Renderer{
             mFilter.setVertexCo(MatrixUtils.getOriginalVertexCo());
         }else if(flag==TYPE_CAMERA){
             mFilter.setVertexCo(new float[]{
-                    -1.0f, 1.0f,
-                    1.0f, 1.0f,
                     -1.0f, -1.0f,
                     1.0f, -1.0f,
+                    -1.0f, 1.0f,
+                    1.0f, 1.0f,
             });
         }
     }
