@@ -1,0 +1,15 @@
+@startuml
+
+cloud {
+用户目的 -> [生成Mp4]
+}
+
+cloud {
+[生成Mp4] -->音频
+}
+
+cloud {
+[生成Mp4] -->视频
+}
+
+@enduml
