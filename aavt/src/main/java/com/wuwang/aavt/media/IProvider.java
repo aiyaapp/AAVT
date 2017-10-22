@@ -4,11 +4,11 @@ package com.wuwang.aavt.media;
  * Created by wuwang on 2017/10/22.
  */
 
-public interface MediaStore<T>{
+public interface IProvider<D> {
 
-    void start(String path);
+    void start();
 
-    void store(T hard);
+    void provide(D d);
 
     void stop();
 

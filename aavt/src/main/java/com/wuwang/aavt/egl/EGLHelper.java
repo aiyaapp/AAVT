@@ -175,6 +175,10 @@ public class EGLHelper {
         return true;
     }
 
+    public void destroySurface(EGLSurface surface){
+        EGL14.eglDestroySurface(mEGLDisplay,surface);
+    }
+
     //创建视频数据流的OES TEXTURE
     public static int createTextureID() {
         int[] texture = new int[1];

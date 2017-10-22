@@ -11,10 +11,10 @@ import com.wuwang.aavt.gl.FrameBuffer;
 import java.util.concurrent.Semaphore;
 
 /**
- * Created by wuwang on 2017/10/20.
+ * Created by wuwang on 2017/10/22.
  */
 
-public class SurfaceVideoTrack extends AAVTrack<SurfaceProvideBean,SurfaceProcessBean> {
+public class SurfaceTextureProcess {
 
     private boolean mGLThreadFlag=false;
     private Thread mGLThread;
@@ -24,29 +24,22 @@ public class SurfaceVideoTrack extends AAVTrack<SurfaceProvideBean,SurfaceProces
     private WrapRenderer mRenderer;
     private int mSourceWidth;
     private int mSourceHeight;
-    private SurfaceProvideBean mBean;
-    private SurfaceProcessBean mProcessBean;
+    private AVMsg msg=new AVMsg();
     private Semaphore mVideoSem;
+    private IAVCall<AVMsg> mCall;
+    private GLBean mGLBean;
+    private static final long BASE_TIME=System.currentTimeMillis();
 
-    public SurfaceVideoTrack(){
+    public SurfaceTextureProcess(IAVCall<AVMsg> call){
         mSem=new Semaphore(0,true);
-        mVideoSem=new Semaphore(0);
-        mBean=new SurfaceProvideBean(mSourceSizeChangeRun);
-        mBean.mVideoSem=mVideoSem;
-        mProcessBean=new SurfaceProcessBean();
+        mVideoSem=new Semaphore(0,true);
+        mGLBean=new GLBean();
+        this.mCall=call;
     }
 
-    private Runnable mSourceSizeChangeRun=new Runnable() {
-        @Override
-        public void run() {
-            mSourceWidth=mBean.getSourceWidth();
-            mSourceHeight=mBean.getSourceHeight();
-        }
-    };
-
-    @Override
     public void start() {
-
+        mSem.drainPermits();
+        mVideoSem.drainPermits();
         mGLThreadFlag=true;
         mGLThread=new Thread(new Runnable() {
             @Override
@@ -55,20 +48,34 @@ public class SurfaceVideoTrack extends AAVTrack<SurfaceProvideBean,SurfaceProces
             }
         });
         mGLThread.start();
+        //等待GL环境创建成功
         try {
             mSem.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        mProvider.startProvide();
-        mProcessor.startProcess();
+    }
+
+    public void setSourceSize(int width,int height){
+        this.mSourceWidth=width;
+        this.mSourceHeight=height;
         mSem.release();
     }
 
-    @Override
+    public void processFrame(){
+        mVideoSem.drainPermits();
+        mVideoSem.release();
+    }
+
     public void stop() {
+        mVideoSem.drainPermits();
         mGLThreadFlag=false;
         mVideoSem.release();
+        try {
+            mSem.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void glRun(){
@@ -76,19 +83,14 @@ public class SurfaceVideoTrack extends AAVTrack<SurfaceProvideBean,SurfaceProces
         boolean ret=egl.createGLESWithSurface(new EGLConfigAttrs(),new EGLContextAttrs(),new SurfaceTexture(1));
         if(!ret){
             //todo 错误处理
-            mBean.msg=AAVBean.MSG_ERROR;
-            mBean.msgStr="创建EGL失败";
-            mProvider.onCall(mBean);
+            onCall(AVMsg.TYPE_ERROR,1,"创建EGL失败");
             mSem.release();
             return;
         }
-        mProcessBean.egl=egl;
-
+        mGLBean.egl=egl;
         mInputSurfaceTextureId=EGLHelper.createTextureID();
         mInputSurfaceTexture=new SurfaceTexture(mInputSurfaceTextureId);
-        mBean.msg=AAVBean.MSG_OK;
-        mBean.data=mInputSurfaceTexture;
-        mProvider.onCall(mBean);
+        onCall(AVMsg.MSG_SURFACE_CREATED,"获取Surface成功",mInputSurfaceTexture);
         mSem.release();
         try {
             mSem.acquire();
@@ -112,18 +114,42 @@ public class SurfaceVideoTrack extends AAVTrack<SurfaceProvideBean,SurfaceProces
             if(mGLThreadFlag){
                 mInputSurfaceTexture.updateTexImage();
                 mInputSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
+                mGLBean.timeStamp=mInputSurfaceTexture.getTimestamp();
                 sourceFrame.bindFrameBuffer(mSourceWidth,mSourceHeight);
                 GLES20.glViewport(0,0,mSourceWidth,mSourceHeight);
                 mRenderer.draw(mInputSurfaceTextureId);
                 sourceFrame.unBindFrameBuffer();
-                mProcessBean.texture=sourceFrame.getCacheTextureId();
-                mProcessBean.width=mSourceWidth;
-                mProcessBean.height=mSourceHeight;
-                mProcessor.onProcess(mProcessBean);
+                mGLBean.texture=sourceFrame.getCacheTextureId();
+                mGLBean.width=mSourceWidth;
+                mGLBean.height=mSourceHeight;
+                onCall(AVMsg.MSG_TEXTURE_OK,"渲染处理成功",mGLBean);
             }
         }
-        mProvider.stopProvide();
-        mProcessor.stopProcess();
+        mGLBean.texture=-1;
+        onCall(AVMsg.MSG_TEXTURE_OK,"最后一次渲染",mGLBean);
+        mSem.release();
+    }
+
+    public static class GLBean{
+        public int texture;
+        public int width;
+        public int height;
+        public long timeStamp;
+        public EGLHelper egl;
+    }
+
+    private void onCall(int type,int ret,String msg){
+        if(mCall!=null){
+            mCall.onCall(new AVMsg(type,ret,msg));
+        }
+    }
+
+    private void onCall(int ret,String msg,Object data){
+        if(mCall!=null){
+            AVMsg avMsg=new AVMsg(AVMsg.TYPE_DATA,ret,msg);
+            avMsg.msgData=data;
+            mCall.onCall(avMsg);
+        }
     }
 
 }
