@@ -2,8 +2,6 @@ package com.wuwang.aavt.mediacmd;
 
 import com.wuwang.aavt.core.IObserver;
 
-import java.util.Locale;
-
 /*
  * Created by Wuwang on 2017/10/23
  */
@@ -21,12 +19,7 @@ public class Cmd {
     public static final int CMD_VIDEO_RENDER=0x80001100;
 
     //音频相关CMD
-    public static final int CMD_AUDIO_OPEN_SOURCE=0x80002001;
-    public static final int CMD_AUDIO_CLOSE_SOURCE=0x80002002;
-    public static final int CMD_AUDIO_OPEN_ENCODE=0x80002005;
-    public static final int CMD_AUDIO_CLOSE_ENCODE=0x80002006;
-
-    public static final int CMD_AUDIO_FRAME_DATA=0x80002007;
+    public static final int CMD_AUDIO_DATA=0x10002001;
 
     public static final int RET_TYPE_DATA=0x00001001;
     public static final int RET_TYPE_ERROR=0x00001002;
@@ -36,9 +29,6 @@ public class Cmd {
     public static final int ERROR_CMD_EXEC_FAILED=0xF0000001;
     //没有可以执行此命令的执行器
     public static final int ERROR_CMD_NO_EXEC=0xF0000002;
-
-    public static final int RET_VALUE_SUCCESS=0;
-    public static final int RET_VALUE_FAILED=1;
 
 
     public IObserver<Cmd> callback;
@@ -56,7 +46,7 @@ public class Cmd {
         this.info=info;
     }
 
-    public Cmd(int cmd,String info,Object obj){
+    private Cmd(int cmd,String info,Object obj){
         this.cmd=cmd;
         this.info= info;
         this.obj=obj;
@@ -94,8 +84,4 @@ public class Cmd {
         return new Cmd(cmd,info,obj);
     }
 
-    @Override
-    public String toString() {
-        return String.format(Locale.CHINA,"[cmd=%x,info=%s,obj=%s]",cmd,info,obj==null?"null":obj.toString());
-    }
 }

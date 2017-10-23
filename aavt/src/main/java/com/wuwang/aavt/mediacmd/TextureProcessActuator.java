@@ -1,14 +1,10 @@
 package com.wuwang.aavt.mediacmd;
 
-import android.annotation.TargetApi;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
-import android.media.MediaCodec;
-import android.opengl.EGL14;
 import android.opengl.GLES20;
-import android.os.Build;
-import android.util.Log;
 
+import com.wuwang.aavt.core.IObservable;
 import com.wuwang.aavt.core.IObserver;
 import com.wuwang.aavt.core.Observable;
 import com.wuwang.aavt.core.Renderer;
@@ -21,7 +17,6 @@ import com.wuwang.aavt.media.WrapRenderer;
 /*
  * Created by Wuwang on 2017/10/23
  */
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class TextureProcessActuator extends AActuator implements IObserver<Cmd> {
 
     private boolean mGLThreadFlag=false;
@@ -32,8 +27,6 @@ public class TextureProcessActuator extends AActuator implements IObserver<Cmd> 
     private int mSourceHeight;
     private WrapRenderer mRenderer;
     private Observable<Cmd> observable;
-    private boolean isCamera=false;
-    private static long startTime=System.currentTimeMillis();
 
     public TextureProcessActuator(){
         observable=new Observable<>();
@@ -47,27 +40,7 @@ public class TextureProcessActuator extends AActuator implements IObserver<Cmd> 
             }else{
                 cmd.errorCallback(Cmd.ERROR_CMD_NO_EXEC,"please set video source actuator to SurfaceTextureActuator");
             }
-        }else if(cmd.cmd==Cmd.CMD_VIDEO_CLOSE_SOURCE){
-            mGLThreadFlag=false;
-            if(mSuccessor!=null){
-                mSuccessor.execute(cmd);
-            }
-            if(mGLThread!=null&&mGLThread.isAlive()){
-                try {
-                    mGLThread.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }else{
-            if(mSuccessor!=null){
-                mSuccessor.execute(cmd);
-            }
         }
-    }
-
-    public void setAsCamera(boolean flag){
-        this.isCamera=flag;
     }
 
     public void setRenderer(Renderer renderer){
@@ -125,13 +98,14 @@ public class TextureProcessActuator extends AActuator implements IObserver<Cmd> 
         FrameBuffer sourceFrame=new FrameBuffer();
         mRenderer.create();
         mRenderer.sizeChanged(mSourceWidth,mSourceHeight);
-        mRenderer.setFlag(isCamera?WrapRenderer.TYPE_CAMERA:WrapRenderer.TYPE_MOVE);
+        mRenderer.setFlag(WrapRenderer.TYPE_CAMERA);
 
         //用于其他的回调
         RenderBean rb=new RenderBean();
         rb.egl=egl;
         rb.sourceWidth=mSourceWidth;
         rb.sourceHeight=mSourceHeight;
+        rb.textureId=mInputSurfaceTextureId;
         rb.endFlag=false;
         Cmd renderCmd=new Cmd(Cmd.CMD_VIDEO_RENDER,"render video");
         renderCmd.retObj=rb;
@@ -140,7 +114,7 @@ public class TextureProcessActuator extends AActuator implements IObserver<Cmd> 
         while (mGLThreadFlag){
             //要求数据源必须同步填充SurfaceTexture，填充完成前等待
             tempCmd.cmd=Cmd.CMD_VIDEO_FRAME_DATA;
-            mSuccessor.execute(tempCmd);
+            mSuccessor.execute(cmd);
             if(mGLThreadFlag){
                 mInputSurfaceTexture.updateTexImage();
                 mInputSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
@@ -148,28 +122,14 @@ public class TextureProcessActuator extends AActuator implements IObserver<Cmd> 
                 GLES20.glViewport(0,0,mSourceWidth,mSourceHeight);
                 mRenderer.draw(mInputSurfaceTextureId);
                 sourceFrame.unBindFrameBuffer();
-                rb.textureId=sourceFrame.getCacheTextureId();
-                if(isCamera){
-                    rb.timeStamp=-1;
-                    observable.notify(renderCmd);
-                }else{
-                    MediaCodec.BufferInfo buf= (MediaCodec.BufferInfo) tempCmd.retObj;
-                    rb.timeStamp= buf.presentationTimeUs;
-                    observable.notify(renderCmd);
-                    Log.e("wuwang","BufferInfo  :  "+buf.flags);
-                    if(buf.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
-                        break;
-                    }
-                }
+                // TODO: 2017/10/23 预览、录制等操作执行
+                observable.notify(renderCmd);
             }
         }
         rb.endFlag=true;
         observable.notify(renderCmd);
         // TODO: 2017/10/23  销毁egl
-        EGL14.eglMakeCurrent(egl.getDisplay(), EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
-        EGL14.eglDestroyContext(egl.getDisplay(),egl.getDefaultContext());
-        EGL14.eglTerminate(egl.getDisplay());
-        Log.e("wuwang","gl thread exit");
+
     }
 
     @Override
