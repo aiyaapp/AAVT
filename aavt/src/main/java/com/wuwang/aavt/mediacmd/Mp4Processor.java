@@ -23,7 +23,7 @@ public class Mp4Processor {
         mShowBean.mOutputHeight=1280;
 
         //用于存储视频
-        mMuxer=new Mp4Muxer(true);
+        mMuxer=new Mp4Muxer(false);
 
         //用于展示视频
         SurfaceShowActuator surfaceShow=new SurfaceShowActuator();

@@ -30,11 +30,9 @@ public class Mp4Extractor extends AActuator {
     private final int TIME_OUT = 1000;
     private final Object Extractor_LOCK=new Object();
     private int mVideoDecoderTrack;
-    private int mAudioEncoderTrack=-1;
-    private int mAudioDecoderTrack;
     private long mVideoStopTimeStamp;
     private boolean isVideoExtractorEnd;
-    private boolean isAudioExtractorEnd;
+    private MediaCodec.BufferInfo mVideoDecoderBufferInfo=new MediaCodec.BufferInfo();
     private boolean isUserWantToStop=true;
     private SurfaceTexture mPreviewTexture;
     private Semaphore frameSem;
@@ -46,9 +44,6 @@ public class Mp4Extractor extends AActuator {
     private boolean isVideoStart=false;
     private long timeStamp=0;
     private MediaCodec.BufferInfo bufferInfo=new MediaCodec.BufferInfo();
-    private MediaCodec.BufferInfo mAudioEncoderBufferInfo=new MediaCodec.BufferInfo();
-    private MediaCodec.BufferInfo mVideoDecoderBufferInfo=new MediaCodec.BufferInfo();
-    private boolean isOpenAudio;
 
     public Mp4Extractor(){
 
@@ -84,47 +79,10 @@ public class Mp4Extractor extends AActuator {
                 e.printStackTrace();
             }
         }else if(cmd.cmd==Cmd.CMD_AUDIO_OPEN_ENCODE){
-            try {
-                openSource();
-                MediaFormat format=mExtractor.getTrackFormat(mAudioDecoderTrack);
-                Log.d(Aavt.debugTag,"audio track-->"+format.toString());
-                mAudioEncoderTrack=mStore.addFormat(format);
-                isOpenAudio=true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }else if(cmd.cmd==Cmd.CMD_AUDIO_CLOSE_ENCODE){
-            isOpenAudio=false;
-            mAudioDecoderTrack=-1;
-        }
-    }
 
-    private boolean audioDecodeStep(ByteBuffer buffer){
-        boolean isTimeEnd=false;
-        if(isOpenAudio){
-            buffer.clear();
-            Log.e("wuwang","mAudioDecoderTrack/mVideoDecoderTrack:"+mAudioDecoderTrack+"/"+mVideoDecoderTrack);
-            mExtractor.selectTrack(mAudioDecoderTrack);
-            do{
-                int length=mExtractor.readSampleData(buffer,0);
-                if(length!=-1){
-                    int flags=mExtractor.getSampleFlags();
-                    mAudioEncoderBufferInfo.size=length;
-                    mAudioEncoderBufferInfo.flags=flags;
-                    mAudioEncoderBufferInfo.presentationTimeUs=mExtractor.getSampleTime();
-                    mAudioEncoderBufferInfo.offset=0;
-                    Log.e(Aavt.debugTag,"audio sampleTime= "+mAudioEncoderBufferInfo.presentationTimeUs+"/"+mVideoStopTimeStamp);
-                    isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
-                    Log.e(Aavt.debugTag,"mAudioEncoderTrack= "+mAudioEncoderTrack );
-                    mStore.addData(mAudioEncoderTrack,buffer,mAudioEncoderBufferInfo);
-                    if(mExtractor.getSampleTime()>mVideoStopTimeStamp){
-                        break;
-                    }
-                }
-                isAudioExtractorEnd=!mExtractor.advance();
-            }while (!isAudioExtractorEnd);
+        }else if(cmd.cmd==Cmd.CMD_AUDIO_CLOSE_ENCODE){
+
         }
-        return isAudioExtractorEnd||isTimeEnd;
     }
 
     private void openSource() throws IOException {
@@ -153,7 +111,7 @@ public class Mp4Extractor extends AActuator {
                             mVideoSize.y=format.getInteger(MediaFormat.KEY_HEIGHT);
                         }
                     }else if(mime.startsWith("audio")){
-                        this.mAudioDecoderTrack=i;
+
                     }
                 }
                 isSourceOpened=true;
@@ -188,8 +146,6 @@ public class Mp4Extractor extends AActuator {
                         mVideoDecoder.stop();
                         mVideoDecoder.release();
                         isVideoStart=false;
-
-                        audioDecodeStep(buffer);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -210,7 +166,7 @@ public class Mp4Extractor extends AActuator {
             isSourceOpened=false;
         }
     }
-    ByteBuffer buffer=ByteBuffer.allocate(1024*64);
+
     private boolean videoDecodeStep(){
         int mInputIndex=mVideoDecoder.dequeueInputBuffer(TIME_OUT);
         if(mInputIndex>=0){

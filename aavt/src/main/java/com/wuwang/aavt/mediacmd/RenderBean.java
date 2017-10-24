@@ -13,4 +13,6 @@ public class RenderBean {
     public int textureId;
     public boolean endFlag;
 
+    public long timeStamp;
+
 }

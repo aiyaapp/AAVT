@@ -47,7 +47,6 @@ public class Mp4Muxer implements HardMediaStore {
         if(mime.startsWith("audio")){
             ret = mMuxer.addTrack(format);
             mTrackSem.release();
-            Log.e("wuwang","add audio track:"+ret);
         }else if(mime.startsWith("video")){
             try {
                 mTrackSem.acquire();
@@ -57,7 +56,6 @@ public class Mp4Muxer implements HardMediaStore {
             ret = mMuxer.addTrack(format);
             mMuxer.start();
             isMuxStart=true;
-            Log.e("wuwang","add video track:"+ret);
         }
         return ret;
     }
@@ -68,7 +66,7 @@ public class Mp4Muxer implements HardMediaStore {
             if(info.size>0&&info.presentationTimeUs>=0){
                 mMuxer.writeSampleData(track, buffer, info);
             }
-            Log.e("wuwang","data-->"+track+"/"+info.flags);
+            Log.e("wuwang","data-->"+info.flags);
             if (info.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
                 stop();
             }
