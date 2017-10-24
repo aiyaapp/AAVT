@@ -9,7 +9,7 @@ import com.wuwang.aavt.utils.MatrixUtils;
  * Created by aiya on 2017/9/12.
  */
 
-class WrapRenderer implements Renderer{
+public class WrapRenderer implements Renderer{
 
     private Renderer mRenderer;
     private OesFilter mFilter;

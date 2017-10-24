@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.wuwang.aavt.av.CameraRecorder2;
 import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.Filter;
+import com.wuwang.aavt.mediacmd.CameraRecorder;
 
 public class CameraRecorderActivity extends AppCompatActivity{
 
@@ -24,7 +25,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
     private Filter mFilter;
     private int mCameraWidth,mCameraHeight;
 
-    private CameraRecorder2 mCamera2;
+    private CameraRecorder mCamera;
 
     private String tempPath= Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.mp4";
 
@@ -38,9 +39,8 @@ public class CameraRecorderActivity extends AppCompatActivity{
 
         long startTime=System.currentTimeMillis();
 
-        mCamera2=new CameraRecorder2();
-        mCamera2.setOutputPath(tempPath);
-        mCamera2.setOutputSize(368,640);
+        mCamera =new CameraRecorder("Camera");
+        mCamera.setOutputPath(tempPath);
 
         mFilter=new BeautyFilter(getResources()).setBeautyLevel(5);
 
@@ -53,16 +53,16 @@ public class CameraRecorderActivity extends AppCompatActivity{
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                mCamera2.setShowSurface(holder.getSurface());
-                mCamera2.setShowSize(width, height);
-                mCamera2.openCamera();
-                mCamera2.startPreview();
+                mCamera.open();
+                mCamera.setPreviewSurface(holder.getSurface());
+                mCamera.startPreview();
                 isPreviewOpen=true;
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                mCamera2.closeCamera();
+                mCamera.stopPreview();
+                mCamera.close();
             }
         });
     }
@@ -73,18 +73,18 @@ public class CameraRecorderActivity extends AppCompatActivity{
                 isPreviewOpen=!isPreviewOpen;
                 mTvPreview.setText(isPreviewOpen?"关预览":"开预览");
                 if(isPreviewOpen){
-                    mCamera2.startPreview();
+                    mCamera.startPreview();
                 }else{
-                    mCamera2.stopPreview();
+                    mCamera.stopPreview();
                 }
                 break;
             case R.id.mTvRec:
                 isRecordOpen=!isRecordOpen;
                 mTvRecord.setText(isRecordOpen?"关录制":"开录制");
                 if(isRecordOpen){
-                    mCamera2.startRecord();
+                    mCamera.startRecord();
                 }else{
-                    mCamera2.stopRecord();
+                    mCamera.stopRecord();
                     Intent v=new Intent(Intent.ACTION_VIEW);
                     v.setDataAndType(Uri.parse(tempPath),"video/mp4");
                     startActivity(v);
@@ -93,34 +93,4 @@ public class CameraRecorderActivity extends AppCompatActivity{
         }
     }
 
-//    @Override
-//    public void create() {
-//        try {
-//            mCamera.setPreviewTexture(mMp4Maker.createInputSurfaceTexture());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        Camera.Size mSize=mCamera.getParameters().getPreviewSize();
-//        mCameraWidth=mSize.height;
-//        mCameraHeight=mSize.width;
-//        mMp4Maker.setSourceSize(mCameraWidth,mCameraHeight);
-//        mCamera.startPreview();
-//
-//        mFilter.create();
-//    }
-//
-//    @Override
-//    public void sizeChanged(int width, int height) {
-//        mFilter.sizeChanged(width, height);
-//    }
-//
-//    @Override
-//    public void draw(int texture) {
-//        mFilter.draw(texture);
-//    }
-//
-//    @Override
-//    public void destroy() {
-//        mFilter.destroy();
-//    }
 }

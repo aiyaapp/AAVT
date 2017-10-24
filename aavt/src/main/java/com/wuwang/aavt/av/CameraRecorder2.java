@@ -2,7 +2,7 @@ package com.wuwang.aavt.av;
 
 import android.os.Environment;
 
-import com.wuwang.aavt.media.AudioProcessor;
+import com.wuwang.aavt.media.AudioEncoder;
 import com.wuwang.aavt.media.CameraProvider;
 import com.wuwang.aavt.media.IProcessor;
 import com.wuwang.aavt.media.Mp4HardwareStore;
@@ -21,7 +21,7 @@ public class CameraRecorder2 {
     private SurfaceShower mShower;
     private SurfaceEncoder mSurfaceEncoder;
     private Mp4HardwareStore mMp4Store;
-    private AudioProcessor mAudioProcessor;
+    private AudioEncoder mAudioEncoder;
     private RecordAudioProvider mAudioProvider;
     private String mPath= Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.mp4";
 
@@ -42,11 +42,11 @@ public class CameraRecorder2 {
                 return 0;
             }
         });
-        mAudioProcessor=new AudioProcessor();
+        mAudioEncoder=new AudioEncoder();
         mAudioProvider=new RecordAudioProvider();
-        mAudioProcessor.setIAVCall(mAudioProvider);
-        mAudioProcessor.setMediaStore(mMp4Store);
-        mMp4Store.addAVCall(mAudioProcessor);
+        mAudioEncoder.setIAVCall(mAudioProvider);
+        mAudioEncoder.setMediaStore(mMp4Store);
+        mMp4Store.addAVCall(mAudioEncoder);
     }
 
     public void setShowSurface(Object surface){

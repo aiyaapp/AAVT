@@ -98,17 +98,17 @@ public class EGLHelper {
             log("getConfig failed : "+EGL14.eglGetError());
             return false;
         }
-        EGLContext eglContext=createContext(config,EGL14.EGL_NO_CONTEXT,ctxAttrs.makeDefault(true));
-        if(eglContext==EGL14.EGL_NO_CONTEXT){
+        mEGLContext=createContext(config,EGL14.EGL_NO_CONTEXT,ctxAttrs.makeDefault(true));
+        if(mEGLContext==EGL14.EGL_NO_CONTEXT){
             log("createContext failed : "+EGL14.eglGetError());
             return false;
         }
-        EGLSurface eglSurface=createWindowSurface(surface);
-        if(eglSurface==EGL14.EGL_NO_SURFACE){
+        mEGLSurface=createWindowSurface(surface);
+        if(mEGLSurface==EGL14.EGL_NO_SURFACE){
             log("createWindowSurface failed : "+EGL14.eglGetError());
             return false;
         }
-        if(!EGL14.eglMakeCurrent(mEGLDisplay,eglSurface,eglSurface,eglContext)){
+        if(!EGL14.eglMakeCurrent(mEGLDisplay,mEGLSurface,mEGLSurface,mEGLContext)){
             log("eglMakeCurrent failed : "+EGL14.eglGetError());
             return false;
         }
@@ -177,6 +177,10 @@ public class EGLHelper {
 
     public void destroySurface(EGLSurface surface){
         EGL14.eglDestroySurface(mEGLDisplay,surface);
+    }
+
+    public EGLDisplay getDisplay(){
+        return mEGLDisplay;
     }
 
     //创建视频数据流的OES TEXTURE

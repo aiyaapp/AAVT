@@ -193,6 +193,11 @@ public class Mp4Processor {
 //                        return false;
 //                    }
                     mVideoDecoderTrack=i;
+
+                    MediaFormat originFormat=mExtractor.getTrackFormat(mVideoDecoderTrack);
+                    int frameRate=originFormat.getInteger(MediaFormat.KEY_FRAME_RATE);
+                    frameRate=frameRate==0?24:frameRate;
+
                     mTotalVideoTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                     String rotation=mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
                     if(rotation!=null){
@@ -210,7 +215,6 @@ public class Mp4Processor {
                     Log.e(Aavt.debugTag,"createDecoder end");
                     mVideoTextureId=mEGLHelper.createTextureID();
                     mVideoSurfaceTexture=new SurfaceTexture(mVideoTextureId);
-                    mVideoSurfaceTexture.setOnFrameAvailableListener(mFrameAvaListener);
                     mVideoDecoder.configure(format,new Surface(mVideoSurfaceTexture),null,0);
                     if(!isRenderToWindowSurface){
                         if(mOutputVideoWidth==0||mOutputVideoHeight==0){
@@ -220,8 +224,8 @@ public class Mp4Processor {
                         MediaFormat videoFormat= MediaFormat.createVideoFormat(/*mime*/"video/avc",mOutputVideoWidth,mOutputVideoHeight);
                         videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
                         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,mOutputVideoHeight*mOutputVideoWidth*5);
-                        videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 24);
-                        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+                        videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+                        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, frameRate*10);
                         mVideoEncoder= MediaCodec.createEncoderByType(/*mime*/"video/avc");
                         mVideoEncoder.configure(videoFormat,null,null, MediaCodec.CONFIGURE_FLAG_ENCODE);
                         mOutputSurface=mVideoEncoder.createInputSurface();
@@ -285,8 +289,9 @@ public class Mp4Processor {
                         //视频处理
                         if(mVideoDecoderTrack>=0){
                             Log.d(Aavt.debugTag,"videoDecodeStep start");
+                            codecNum=0;
                             while (mCodecFlag&&!videoDecodeStep());
-                            Log.d(Aavt.debugTag,"videoDecodeStep end");
+                            Log.d(Aavt.debugTag,"videoDecodeStep end--FrameNum="+codecNum);
                             mGLThreadFlag=false;
                             try {
                                 mSem.release();
@@ -339,6 +344,7 @@ public class Mp4Processor {
                 mAudioEncoderBufferInfo.flags=flags;
                 mAudioEncoderBufferInfo.presentationTimeUs=mExtractor.getSampleTime();
                 mAudioEncoderBufferInfo.offset=0;
+                Log.e(Aavt.debugTag,"audio sampleTime="+mAudioEncoderBufferInfo.presentationTimeUs);
                 isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
                 mMuxer.writeSampleData(mAudioEncoderTrack,buffer,mAudioEncoderBufferInfo);
             }
@@ -348,6 +354,7 @@ public class Mp4Processor {
     }
 
     //视频解码到SurfaceTexture上，以供后续处理。返回值为是否是最后一帧视频
+    private int codecNum=0;
     private boolean videoDecodeStep(){
         int mInputIndex=mVideoDecoder.dequeueInputBuffer(TIME_OUT);
         if(mInputIndex>=0){
@@ -369,7 +376,6 @@ public class Mp4Processor {
             if(mOutputIndex>=0){
                 try {
                     Log.d(Aavt.debugTag," mDecodeSem.acquire ");
-                    mSem.release();
                     if(!isUserWantToStop){
                         mDecodeSem.acquire();
                     }
@@ -377,7 +383,10 @@ public class Mp4Processor {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                codecNum++;
                 mVideoDecoder.releaseOutputBuffer(mOutputIndex,true);
+                mSem.release();
+
             }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 //MediaFormat format=mVideoDecoder.getOutputFormat();
             }else if(mOutputIndex== MediaCodec.INFO_TRY_AGAIN_LATER){
@@ -417,7 +426,7 @@ public class Mp4Processor {
 
     private void glRunnable(){
         mSem=new Semaphore(0);
-        mDecodeSem=new Semaphore(0);
+        mDecodeSem=new Semaphore(1);
         mEGLHelper.setSurface(mOutputSurface);
         boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
         if(!ret)return;
@@ -426,6 +435,7 @@ public class Mp4Processor {
         }
         mRenderer.create();
         mRenderer.sizeChanged(mOutputVideoWidth,mOutputVideoHeight);
+        int frameNum=0;
         while (mGLThreadFlag){
             try {
                 Log.d(Aavt.debugTag," mSem.acquire ");
@@ -441,6 +451,7 @@ public class Mp4Processor {
                 mRenderer.draw(mVideoTextureId);
                 mEGLHelper.setPresentationTime(mVideoDecoderBufferInfo.presentationTimeUs*1000);
                 if(!isRenderToWindowSurface){
+                    frameNum++;
                     videoEncodeStep(false);
                 }
                 mEGLHelper.swapBuffers();
@@ -450,6 +461,7 @@ public class Mp4Processor {
             }
             mDecodeSem.release();
         }
+        Log.e(Aavt.debugTag,"Encode Frame num-----:"+frameNum);
         if(!isRenderToWindowSurface){
             videoEncodeStep(true);
         }
@@ -464,14 +476,6 @@ public class Mp4Processor {
     public long getTotalVideoTime(){
         return mTotalVideoTime;
     }
-
-    private SurfaceTexture.OnFrameAvailableListener mFrameAvaListener=new SurfaceTexture.OnFrameAvailableListener() {
-        @Override
-        public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-            Log.e(Aavt.debugTag,"mSem.release ");
-//            mSem.release();
-        }
-    };
 
     private void avStop(){
         if(isStarted){

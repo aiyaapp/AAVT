@@ -59,7 +59,6 @@ public class SurfaceEncoder implements IProcessor<SurfaceTextureProcess.GLBean,O
             if(mEncodeSurface!=null){
                 bean.egl.destroySurface(mEncodeSurface);
                 mEncodeSurface=null;
-                Log.e("wuwang","stop encoder and destroy surface");
             }
             return 0;
         } else if(isShow&&o!=null&&isCodecStarted){
@@ -74,7 +73,6 @@ public class SurfaceEncoder implements IProcessor<SurfaceTextureProcess.GLBean,O
             bean.egl.makeCurrent(mEncodeSurface);
             GLES20.glViewport(0,0,mOutputWidth,mOutputHeight);
             mFilter.draw(bean.texture);
-            Log.e("wuwang","getTime  -- --- :"+((System.currentTimeMillis()-startTime)*1000000));
             bean.egl.setPresentationTime(mEncodeSurface,/*bean.timeStamp*/(System.currentTimeMillis()-startTime)*1000000);
             videoEncodeStep(false);
             bean.egl.swapBuffers(mEncodeSurface);
@@ -148,7 +146,6 @@ public class SurfaceEncoder implements IProcessor<SurfaceTextureProcess.GLBean,O
                 }
                 while (true){
                     int outputIndex=mVideoCodec.dequeueOutputBuffer(mHardCodecData.info,1000);
-                    Log.e("wuwang","videoEncode----------------------:"+outputIndex);
                     if(outputIndex>=0){
                         if(mMediaStore!=null&&mHardCodecData.trackIndex>=0&&isStoreStarted){
                             mHardCodecData.type= HardCodecData.DATA;
@@ -157,13 +154,11 @@ public class SurfaceEncoder implements IProcessor<SurfaceTextureProcess.GLBean,O
                         }
                         mVideoCodec.releaseOutputBuffer(outputIndex,false);
                         if(mHardCodecData.info.flags== MediaCodec.BUFFER_FLAG_END_OF_STREAM){
-                            Log.d("wuwang","CameraRecorder get video encode end of stream");
                             return true;
                         }
                     }else if(outputIndex==MediaCodec.INFO_TRY_AGAIN_LATER){
                         break;
                     }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                        Log.e("wuwang","get video output format changed ->"+mVideoCodec.getOutputFormat().toString());
                         if(mMediaStore!=null){
                             mHardCodecData.type= HardCodecData.ADDTRACK;
                             mHardCodecData.other=mVideoCodec.getOutputFormat();

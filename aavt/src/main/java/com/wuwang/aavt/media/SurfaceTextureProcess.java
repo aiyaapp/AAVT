@@ -29,6 +29,7 @@ public class SurfaceTextureProcess {
     private IAVCall<AVMsg> mCall;
     private GLBean mGLBean;
     private static final long BASE_TIME=System.currentTimeMillis();
+    private boolean isCamera=false;
 
     public SurfaceTextureProcess(IAVCall<AVMsg> call){
         mSem=new Semaphore(0,true);
@@ -54,6 +55,10 @@ public class SurfaceTextureProcess {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setAsCamera(boolean flag){
+        this.isCamera=false;
     }
 
     public void setSourceSize(int width,int height){
@@ -104,7 +109,7 @@ public class SurfaceTextureProcess {
         FrameBuffer sourceFrame=new FrameBuffer();
         mRenderer.create();
         mRenderer.sizeChanged(mSourceWidth,mSourceHeight);
-        mRenderer.setFlag(WrapRenderer.TYPE_CAMERA);
+        mRenderer.setFlag(isCamera?WrapRenderer.TYPE_CAMERA:WrapRenderer.TYPE_MOVE);
         while (mGLThreadFlag){
             try {
                 mVideoSem.acquire();

@@ -64,7 +64,6 @@ public class Mp4HardwareStore implements MediaStore<HardCodecData>{
                     onCall(AVMsg.MSG_STORE_START,"添加Track成功",startTime);
                 }
             }else if(data.type== HardCodecData.DATA&&data.info.size>0&&isAudioAdd&&isVideoAdd&&data.info.presentationTimeUs>0){
-                Log.e("wuwang","writeSampleData:"+data.trackIndex+"/"+data.info.presentationTimeUs);
                 mMuxer.writeSampleData(data.trackIndex,data.data,data.info);
             }
         }
