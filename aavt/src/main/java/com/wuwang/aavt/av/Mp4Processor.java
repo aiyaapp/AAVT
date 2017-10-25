@@ -30,10 +30,10 @@ import java.util.concurrent.Semaphore;
  * MP4处理工具，暂时只用于处理图像。
  * 4.4的手机不支持video/mp4v-es格式的视频流，MediaMuxer混合无法stop，5.0以上可以
  */
-
+// TODO: 2017/10/25 初始的几帧还有问题，暂未找到原因 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Mp4Processor {
-
+    
     private final int TIME_OUT=1000;
 
     private String mInputPath;                  //输入路径
@@ -67,7 +67,7 @@ public class Mp4Processor {
     private int mVideoTextureId;        //原始视频图像的纹理
     private SurfaceTexture mVideoSurfaceTexture;    //用于接收原始视频的解码的图像流
 
-    private boolean isRenderToWindowSurface;        //是否渲染到用户设置的WindowBuffer上，用于测试
+    private boolean isRenderToWindowSurface=false;        //是否渲染到用户设置的WindowBuffer上，用于测试
     private Surface mOutputSurface;                 //视频输出的Surface
 
     private Thread mDecodeThread;
@@ -341,12 +341,16 @@ public class Mp4Processor {
                 mAudioEncoderBufferInfo.offset=0;
                 isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
                 mMuxer.writeSampleData(mAudioEncoderTrack,buffer,mAudioEncoderBufferInfo);
+                isAudioExtractorEnd=false;
+            }else{
+                isAudioExtractorEnd=true;
             }
-            isAudioExtractorEnd=!mExtractor.advance();
+            mExtractor.advance();
         }
         return isAudioExtractorEnd||isTimeEnd;
     }
 
+    int frameCount=0;
     //视频解码到SurfaceTexture上，以供后续处理。返回值为是否是最后一帧视频
     private boolean videoDecodeStep(){
         int mInputIndex=mVideoDecoder.dequeueInputBuffer(TIME_OUT);
@@ -360,17 +364,19 @@ public class Mp4Processor {
                     mVideoStopTimeStamp=mExtractor.getSampleTime();
                     Log.d(Aavt.debugTag,"mVideoStopTimeStamp:"+mVideoStopTimeStamp);
                     mVideoDecoder.queueInputBuffer(mInputIndex, 0, ret, mVideoStopTimeStamp, mExtractor.getSampleFlags());
+                    isVideoExtractorEnd=false;
+                }else{
+                    isVideoExtractorEnd=true;
                 }
-                isVideoExtractorEnd = !mExtractor.advance();
+                mExtractor.advance();
             }
         }
         while (true){
             int mOutputIndex=mVideoDecoder.dequeueOutputBuffer(mVideoDecoderBufferInfo,TIME_OUT);
             if(mOutputIndex>=0){
                 try {
-                    Log.d(Aavt.debugTag," mDecodeSem.acquire ");
-                    mSem.release();
-                    if(!isUserWantToStop){
+                    Log.d(Aavt.debugTag," mDecodeSem.acquire :"+mVideoDecoderBufferInfo.size);
+                    if(!isUserWantToStop&&!(isVideoExtractorEnd&&mVideoStopTimeStamp==mVideoDecoderBufferInfo.presentationTimeUs)){
                         mDecodeSem.acquire();
                     }
                     Log.d(Aavt.debugTag," mDecodeSem.acquire end ");
@@ -378,28 +384,41 @@ public class Mp4Processor {
                     e.printStackTrace();
                 }
                 mVideoDecoder.releaseOutputBuffer(mOutputIndex,true);
+                mSem.release();
+                frameCount++;
             }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 //MediaFormat format=mVideoDecoder.getOutputFormat();
             }else if(mOutputIndex== MediaCodec.INFO_TRY_AGAIN_LATER){
+                Log.e("wuwang","time Com decode:"+isVideoExtractorEnd+"/"+frameCount+"/"+mVideoStopTimeStamp+"/"+mVideoDecoderBufferInfo.presentationTimeUs);
+                if(isVideoExtractorEnd&&mVideoStopTimeStamp>mVideoDecoderBufferInfo.presentationTimeUs){
+                    continue;
+                }
                 break;
             }
         }
         return isVideoExtractorEnd||isUserWantToStop;
     }
 
+    private int enFrame=0;
     private boolean videoEncodeStep(boolean isEnd){
         if(isEnd){
             mVideoEncoder.signalEndOfInputStream();
         }
+        enFrame++;
+        Log.e("wuwang","encodeFrameCount:"+enFrame);
         while (true){
             int mOutputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncoderBufferInfo,TIME_OUT);
-            Log.d(Aavt.debugTag,"videoEncodeStep-------------------mOutputIndex="+mOutputIndex+"/"+mVideoEncoderBufferInfo.presentationTimeUs);
             if(mOutputIndex>=0){
                 ByteBuffer buffer=getOutputBuffer(mVideoEncoder,mOutputIndex);
                 if(mVideoEncoderBufferInfo.size>0){
+                    Log.e("wuwang","time Com encode:"+enFrame+"/"+mVideoEncoderBufferInfo.size+"/"+mVideoEncoderBufferInfo.presentationTimeUs);
                     mMuxer.writeSampleData(mVideoEncoderTrack,buffer,mVideoEncoderBufferInfo);
                 }
                 mVideoEncoder.releaseOutputBuffer(mOutputIndex,false);
+                if(isEnd&&mVideoEncoderBufferInfo.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
+                    Log.e("wuwang","time Com encode-------------------------------------------");
+                    break;
+                }
             }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 MediaFormat format=mVideoEncoder.getOutputFormat();
                 Log.d(Aavt.debugTag,"video format -->"+format.toString());
@@ -408,7 +427,7 @@ public class Mp4Processor {
                 synchronized (MUX_LOCK){
                     MUX_LOCK.notifyAll();
                 }
-            }else if(mOutputIndex== MediaCodec.INFO_TRY_AGAIN_LATER){
+            }else if(mOutputIndex== MediaCodec.INFO_TRY_AGAIN_LATER&&!isEnd){
                 break;
             }
         }
@@ -417,7 +436,7 @@ public class Mp4Processor {
 
     private void glRunnable(){
         mSem=new Semaphore(0);
-        mDecodeSem=new Semaphore(0);
+        mDecodeSem=new Semaphore(1);
         mEGLHelper.setSurface(mOutputSurface);
         boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
         if(!ret)return;
