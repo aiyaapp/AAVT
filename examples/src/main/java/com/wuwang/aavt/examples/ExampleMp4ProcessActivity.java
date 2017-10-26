@@ -16,19 +16,21 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
-import com.wuwang.aavt.mediacmd.Mp4Processor;
+import com.wuwang.aavt.av.Mp4Processor2;
 
 public class ExampleMp4ProcessActivity extends AppCompatActivity {
 
-    private Mp4Processor mProcessor;
     private SurfaceView mSurfaceView;
+    private Mp4Processor2 mMp4Processor;
+    private String tempPath= Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.mp4";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mp4);
-        mProcessor=new Mp4Processor(Environment.getExternalStorageDirectory().getAbsolutePath()+"/a.mp4");
-        mProcessor.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4");
+        mMp4Processor=new Mp4Processor2();
+        mMp4Processor.setInputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/a.mp4");
+        mMp4Processor.setOutputPath(tempPath);
         mSurfaceView= (SurfaceView) findViewById(R.id.mSurfaceView);
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -38,14 +40,14 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                mProcessor.setPreviewSurface(holder.getSurface());
-                mProcessor.setPreviewSize(width, height);
-                mProcessor.startPreview();
+                mMp4Processor.setSurface(holder);
+                mMp4Processor.setPreviewSize(width, height);
+                mMp4Processor.startPreview();
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                mProcessor.stopPreview();
+                mMp4Processor.stopPreview();
             }
         });
 //        mProcessor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
@@ -104,17 +106,16 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
                 break;
             case R.id.mProcess:
-                mProcessor.close();
-                mProcessor.startRecord();
-                mProcessor.open();
+                mMp4Processor.startRecord();
+                mMp4Processor.open();
                 break;
             case R.id.mStop:
-                mProcessor.stopRecord();
-                mProcessor.close();
+                mMp4Processor.stopRecord();
+                mMp4Processor.close();
                 break;
             case R.id.mPlay:
                 Intent v=new Intent(Intent.ACTION_VIEW);
-                v.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4"),"video/mp4");
+                v.setDataAndType(Uri.parse(tempPath),"video/mp4");
                 startActivity(v);
                 break;
         }
@@ -125,7 +126,7 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             String path = getRealFilePath(data.getData());
             if (path != null) {
-                mProcessor.setInputPath(path);
+                mMp4Processor.setInputPath(path);
             }
         }
     }

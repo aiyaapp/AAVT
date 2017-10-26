@@ -208,6 +208,7 @@ public class YuvOutputFilter extends BaseFilter {
                         "}");
                     break;
                 case YuvOutputFilter.EXPORT_TYPE_NV21:
+                default:
                     sb.append("void main() {\n" +
                             "    if(vTextureCo.y<0.2500){\n" +
                             "        gl_FragColor=calculateY();\n" +

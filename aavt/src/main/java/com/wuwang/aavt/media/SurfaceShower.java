@@ -3,64 +3,76 @@ package com.wuwang.aavt.media;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 
+import com.wuwang.aavt.core.IObserver;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
-/**
- * Created by wuwang on 2017/10/22.
+/*
+ * Created by Wuwang on 2017/10/23
  */
+public class SurfaceShower implements IObserver<RenderBean> {
 
-public class SurfaceShower implements IProcessor<SurfaceTextureProcess.GLBean,Object> {
-
-    private boolean isShow=false;
     private EGLSurface mShowSurface;
-    private int mOutputWidth=720;
-    private int mOutputHeight=1280;
+    private boolean isShow=false;
     private Filter mFilter;
+    private Object mSurface;
+    private int mWidth;
+    private int mHeight;
+    private int mMatrixType=MatrixUtils.TYPE_CENTERCROP;
+    private OnDrawEndListener mListener;
 
-    public SurfaceShower(){
-
+    public void setOutputSize(int width,int height){
+        this.mWidth=width;
+        this.mHeight=height;
     }
 
-    public void openShow(int width,int height){
+    public void setSurface(Object surface){
+        this.mSurface=surface;
+    }
+
+    public void setMatrixType(int type){
+        this.mMatrixType=type;
+    }
+
+    public void open(){
         isShow=true;
-        this.mOutputWidth=width;
-        this.mOutputHeight=height;
     }
 
-    public void openShow(){
-        isShow=true;
-    }
-
-    public void closeShow(){
+    public void close(){
         isShow=false;
     }
 
     @Override
-    public int process(SurfaceTextureProcess.GLBean bean, Object o) {
-        if(bean.texture==-1){
-            if(mShowSurface!=null){
-                bean.egl.destroySurface(mShowSurface);
-                mShowSurface=null;
-            }
-            return 0;
-        }
-        if(isShow&&o!=null){
+    public void onCall(RenderBean rb) {
+        if(rb.endFlag&&mShowSurface!=null){
+            rb.egl.destroySurface(mShowSurface);
+            mShowSurface=null;
+        }else if(isShow&&mSurface!=null){
             if(mShowSurface==null){
-                mShowSurface=bean.egl.createWindowSurface(o);
+                mShowSurface=rb.egl.createWindowSurface(mSurface);
                 mFilter=new BaseFilter();
                 mFilter.create();
-                mFilter.sizeChanged(bean.width, bean.height);
-                MatrixUtils.getMatrix(mFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,bean.width,bean.height,
-                        mOutputWidth,mOutputHeight);
+                mFilter.sizeChanged(rb.sourceWidth, rb.sourceHeight);
+                MatrixUtils.getMatrix(mFilter.getVertexMatrix(),mMatrixType,rb.sourceWidth,rb.sourceHeight,
+                        mWidth,mHeight);
             }
-            bean.egl.makeCurrent(mShowSurface);
-            GLES20.glViewport(0,0,mOutputWidth,mOutputHeight);
-            mFilter.draw(bean.texture);
-            bean.egl.swapBuffers(mShowSurface);
+            rb.egl.makeCurrent(mShowSurface);
+            GLES20.glViewport(0,0,mWidth,mHeight);
+            mFilter.draw(rb.textureId);
+            if(mListener!=null){
+                mListener.onDrawEnd(mShowSurface,rb);
+            }
+            rb.egl.swapBuffers(mShowSurface);
         }
-        return 0;
+    }
+
+    public void setOnDrawEndListener(OnDrawEndListener listener){
+        this.mListener=listener;
+    }
+
+    public interface OnDrawEndListener{
+        void onDrawEnd(EGLSurface surface,RenderBean bean);
     }
 
 }

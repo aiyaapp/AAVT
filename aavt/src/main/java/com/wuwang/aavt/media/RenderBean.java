@@ -1,4 +1,4 @@
-package com.wuwang.aavt.mediacmd;
+package com.wuwang.aavt.media;
 
 import com.wuwang.aavt.egl.EGLHelper;
 
@@ -14,5 +14,8 @@ public class RenderBean {
     public boolean endFlag;
 
     public long timeStamp;
+    public long textureTime;
+
+    public long threadId;
 
 }

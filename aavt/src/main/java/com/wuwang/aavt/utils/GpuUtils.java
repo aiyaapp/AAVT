@@ -64,9 +64,13 @@ public enum GpuUtils {
      */
     public static int createGLProgram(String vertexSource, String fragmentSource){
         int vertex=loadShader(GLES20.GL_VERTEX_SHADER,vertexSource);
-        if(vertex==0)return 0;
+        if(vertex==0){
+            return 0;
+        }
         int fragment=loadShader(GLES20.GL_FRAGMENT_SHADER,fragmentSource);
-        if(fragment==0)return 0;
+        if(fragment==0){
+            return 0;
+        }
         int program= GLES20.glCreateProgram();
         if(program!=0){
             GLES20.glAttachShader(program,vertex);

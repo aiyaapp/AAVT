@@ -1,84 +1,92 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wuwang.aavt.media;
 
+import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
 
 /**
- * Created by wuwang on 2017/10/22.
+ * CameraProvider 相机数据
+ *
+ * @author wuwang
+ * @version v1.0 2017:10:26 18:09
  */
-
-public class CameraProvider extends AProvider<Object> implements IAVCall<AVMsg>,SurfaceTexture.OnFrameAvailableListener {
+public class CameraProvider implements ITextureProvider {
 
     private Camera mCamera;
     private int cameraId=1;
-    private SurfaceTextureProcess mSurfaceProcess;
-    private SurfaceTexture mSurface;
-    private boolean isStarted=false;
-    private Object mOutputSurface;
-
-    public CameraProvider(){
-        mSurfaceProcess=new SurfaceTextureProcess(this);
-    }
+    private Semaphore mFrameSem;
 
     @Override
-    public void start() {
-        if(!isStarted){
-            isStarted=true;
-            mSurfaceProcess.start();
-            try {
-                mCamera=Camera.open(cameraId);
-                Camera.Size size=mCamera.getParameters().getPreviewSize();
-                mSurfaceProcess.setSourceSize(size.height,size.width);
-                mSurface.setOnFrameAvailableListener(this);
-                mCamera.setPreviewTexture(mSurface);
-                mCamera.startPreview();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public Point open(final SurfaceTexture surface) {
+        mFrameSem=new Semaphore(0);
+        mCamera=Camera.open(cameraId);
+        try {
+            mCamera.setPreviewTexture(surface);
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    surface.setOnFrameAvailableListener(frameListener);
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        Camera.Size size=mCamera.getParameters().getPreviewSize();
+        mCamera.startPreview();
+        return new Point(size.height,size.width);
     }
 
     @Override
-    public void provide(Object surface) {
-        this.mOutputSurface=surface;
+    public void close() {
+        mFrameSem.drainPermits();
+        mFrameSem.release();
+
+        mCamera.stopPreview();
+        mCamera.release();
+        mCamera=null;
     }
 
     @Override
-    public void stop() {
-        if(isStarted){
-            mSurfaceProcess.stop();
-            if(mCamera!=null){
-                mCamera.stopPreview();
-                mCamera.release();
-                mCamera=null;
-            }
-            isStarted=false;
+    public boolean frame() {
+        try {
+            mFrameSem.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        return false;
     }
 
     @Override
-    public void onCall(AVMsg data) {
-        if(data.msgType==AVMsg.TYPE_DATA){
-            switch (data.msgRet){
-                case AVMsg.MSG_TEXTURE_OK:
-                    onProcessFrame((SurfaceTextureProcess.GLBean)data.msgData);
-                    break;
-                case AVMsg.MSG_SURFACE_CREATED:
-                    mSurface= (SurfaceTexture) data.msgData;
-                    break;
-            }
+    public long getTimeStamp() {
+        return -1;
+    }
+
+    private SurfaceTexture.OnFrameAvailableListener frameListener=new SurfaceTexture.OnFrameAvailableListener() {
+
+        @Override
+        public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+            mFrameSem.drainPermits();
+            mFrameSem.release();
         }
-    }
 
-    private void onProcessFrame(SurfaceTextureProcess.GLBean bean){
-        mProcessor.process(bean,mOutputSurface);
-    }
-
-    @Override
-    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        mSurfaceProcess.processFrame();
-    }
+    };
 
 }

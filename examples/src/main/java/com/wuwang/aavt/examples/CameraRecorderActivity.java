@@ -14,7 +14,6 @@ import android.widget.TextView;
 import com.wuwang.aavt.av.CameraRecorder2;
 import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.Filter;
-import com.wuwang.aavt.mediacmd.CameraRecorder;
 
 public class CameraRecorderActivity extends AppCompatActivity{
 
@@ -25,7 +24,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
     private Filter mFilter;
     private int mCameraWidth,mCameraHeight;
 
-    private CameraRecorder mCamera;
+    private CameraRecorder2 mCamera;
 
     private String tempPath= Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.mp4";
 
@@ -39,7 +38,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
 
         long startTime=System.currentTimeMillis();
 
-        mCamera =new CameraRecorder("Camera");
+        mCamera =new CameraRecorder2();
         mCamera.setOutputPath(tempPath);
 
         mFilter=new BeautyFilter(getResources()).setBeautyLevel(5);
@@ -54,7 +53,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 mCamera.open();
-                mCamera.setPreviewSurface(holder.getSurface());
+                mCamera.setSurface(holder.getSurface());
                 mCamera.startPreview();
                 isPreviewOpen=true;
             }

@@ -109,6 +109,8 @@ public class LowEGLHelper {
             case EGL10.EGL_PBUFFER_BIT:
                 mEGLSurface= mEgl.eglCreatePbufferSurface(mEGLDisplay,mEGLConfig,bufferAttrs);
                 break;
+            default:
+                break;
         }
         if(mEGLSurface== EGL10.EGL_NO_SURFACE){
             log("eglCreateSurface Error:"+ mEgl.eglGetError());

@@ -29,8 +29,9 @@ import java.util.concurrent.Semaphore;
 /**
  * MP4处理工具，暂时只用于处理图像。
  * 4.4的手机不支持video/mp4v-es格式的视频流，MediaMuxer混合无法stop，5.0以上可以
+ *
  */
-
+@Deprecated
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Mp4Processor {
 
@@ -290,7 +291,7 @@ public class Mp4Processor {
                         if(mVideoDecoderTrack>=0){
                             Log.d(Aavt.debugTag,"videoDecodeStep start");
                             codecNum=0;
-                            while (mCodecFlag&&!videoDecodeStep());
+                            while (mCodecFlag&&!videoDecodeStep()){};
                             Log.d(Aavt.debugTag,"videoDecodeStep end--FrameNum="+codecNum);
                             mGLThreadFlag=false;
                             try {
@@ -303,7 +304,7 @@ public class Mp4Processor {
                         //将原视频中的音频复制到新视频中
                         if(mAudioDecoderTrack>=0&&mVideoEncoderTrack>=0){
                             ByteBuffer buffer= ByteBuffer.allocate(1024*32);
-                            while (mCodecFlag&&!audioDecodeStep(buffer));
+                            while (mCodecFlag&&!audioDecodeStep(buffer)){};
                             buffer.clear();
                         }
 
@@ -429,7 +430,9 @@ public class Mp4Processor {
         mDecodeSem=new Semaphore(1);
         mEGLHelper.setSurface(mOutputSurface);
         boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
-        if(!ret)return;
+        if(!ret){
+            return;
+        }
         if(mRenderer==null){
             mRenderer=new WrapRenderer(null);
         }
