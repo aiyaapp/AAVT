@@ -1,7 +1,9 @@
+/*
+ * Created by Wuwang on 2017/10/11
+ * Copyright © 2017年 深圳哎吖科技. All rights reserved.
+ */
 package com.wuwang.aavt.examples;
 
-import android.media.MediaPlayer;
-import android.os.Environment;
 import android.util.Log;
 
 import com.wuwang.aavt.av.Mp4Processor;
@@ -11,10 +13,7 @@ import com.wuwang.aavt.gl.Filter;
 
 import java.io.IOException;
 
-/*
- * Created by Wuwang on 2017/10/11
- * Copyright © 2017年 深圳哎吖科技. All rights reserved.
- */
+
 public class VideoUtils {
 
     public static void transcodeVideoFile(String srcVideoFile, String dstVideoFile, int dstWidth, int dstHeight, int durationUS, OnProgress onProgress) throws IOException {

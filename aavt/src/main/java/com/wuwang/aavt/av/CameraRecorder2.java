@@ -13,14 +13,15 @@
  */
 package com.wuwang.aavt.av;
 
+import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.media.CameraProvider;
 import com.wuwang.aavt.media.HardMediaStore;
 import com.wuwang.aavt.media.ITextureProvider;
 import com.wuwang.aavt.media.Mp4Muxer;
-import com.wuwang.aavt.media.Mp4SurfaceStore;
+import com.wuwang.aavt.media.SurfaceEncoder;
 import com.wuwang.aavt.media.SoundRecorder;
 import com.wuwang.aavt.media.SurfaceShower;
-import com.wuwang.aavt.media.TextureProcessor;
+import com.wuwang.aavt.media.VideoSurfaceProcessor;
 
 /**
  * CameraRecorder2
@@ -31,10 +32,10 @@ import com.wuwang.aavt.media.TextureProcessor;
 public class CameraRecorder2 {
 
 
-    private TextureProcessor mTextureProcessor;
+    private VideoSurfaceProcessor mTextureProcessor;
     private ITextureProvider mCameraProvider;
     private SurfaceShower mShower;
-    private Mp4SurfaceStore mSurfaceStore;
+    private SurfaceEncoder mSurfaceStore;
     private HardMediaStore mMuxer;
 
     private SoundRecorder mSoundRecord;
@@ -48,18 +49,21 @@ public class CameraRecorder2 {
         mShower.setOutputSize(720,1280);
 
         //用于编码图像
-        mSurfaceStore=new Mp4SurfaceStore();
+        mSurfaceStore=new SurfaceEncoder();
         mSurfaceStore.setStore(mMuxer);
 
         //用于音频
         mSoundRecord=new SoundRecorder(mMuxer);
 
         //用于处理视频图像
-        mTextureProcessor=new TextureProcessor();
-        mTextureProcessor.setAsCamera(true);
+        mTextureProcessor=new VideoSurfaceProcessor();
         mTextureProcessor.setTextureProvider(mCameraProvider=new CameraProvider());
         mTextureProcessor.addObserver(mShower);
         mTextureProcessor.addObserver(mSurfaceStore);
+    }
+
+    public void setRenderer(Renderer renderer){
+        mTextureProcessor.setRenderer(renderer);
     }
 
     /**

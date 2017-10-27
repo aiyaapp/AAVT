@@ -15,6 +15,8 @@ import com.wuwang.aavt.Aavt;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /*
  * Created by Wuwang on 2017/10/26
@@ -61,6 +63,7 @@ public class SoundRecorder {
                 public void run() {
                     while (!stopFlag&&!audioEncodeStep(false)){};
                     audioEncodeStep(true);
+                    Log.e("wuwang","audio stop");
                     if(isStarted){
                         mRecord.stop();
                         mRecord.release();

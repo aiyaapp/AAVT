@@ -11,7 +11,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.wuwang.aavt.media;
 
 import android.graphics.Point;
@@ -48,5 +47,11 @@ public interface ITextureProvider {
      * @return 时间戳
      */
     long getTimeStamp();
+
+    /**
+     * 视频流是否是横向的
+     * @return true or false
+     */
+    boolean isLandscape();
 
 }

@@ -11,7 +11,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.wuwang.aavt.media;
 
 /**
@@ -21,8 +20,6 @@ package com.wuwang.aavt.media;
  * @version v1.0 2017:10:26 18:28
  */
 public class MediaConfig {
-
-    public static final int TYPE_VIDEO=1;
 
     public Video mVideo=new Video();
     public Audio mAudio=new Audio();

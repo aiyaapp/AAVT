@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.wuwang.aavt.av.CameraRecorder2;
 import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.Filter;
+import com.wuwang.aavt.gl.GrayFilter;
 
 public class CameraRecorderActivity extends AppCompatActivity{
 
@@ -39,6 +40,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
         long startTime=System.currentTimeMillis();
 
         mCamera =new CameraRecorder2();
+        mCamera.setRenderer(new BeautyFilter(getResources()).setBeautyLevel(4));
         mCamera.setOutputPath(tempPath);
 
         mFilter=new BeautyFilter(getResources()).setBeautyLevel(5);

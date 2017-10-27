@@ -185,11 +185,18 @@ public class Mp4Provider implements ITextureProvider {
                     info.offset=0;
                     Log.e(Aavt.debugTag,"audio sampleTime= "+info.presentationTimeUs+"/"+mVideoStopTimeStamp);
                     isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
-                    Log.e(Aavt.debugTag,"mAudioEncoderTrack= "+mAudioEncodeTrack );
+                    Log.e(Aavt.debugTag,"is End= "+isAudioEnd );
                     mStore.addData(mAudioEncodeTrack,buffer,info);
                     if(isAudioEnd){
                         break;
                     }
+                }else{
+                    Log.e(Aavt.debugTag,"is End= "+true );
+                    info.size=0;
+                    info.flags=MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                    mStore.addData(mAudioEncodeTrack,buffer,info);
+                    isTimeEnd=true;
+                    break;
                 }
                 mExtractor.advance();
             }
@@ -240,6 +247,10 @@ public class Mp4Provider implements ITextureProvider {
         return nowTimeStamp;
     }
 
+    @Override
+    public boolean isLandscape() {
+        return false;
+    }
 
 
 }

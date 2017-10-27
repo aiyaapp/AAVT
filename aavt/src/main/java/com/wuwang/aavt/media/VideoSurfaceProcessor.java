@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wuwang.aavt.media;
 
 import android.annotation.TargetApi;
@@ -16,22 +29,25 @@ import com.wuwang.aavt.egl.EGLContextAttrs;
 import com.wuwang.aavt.egl.EGLHelper;
 import com.wuwang.aavt.gl.FrameBuffer;
 
-/*
- * Created by Wuwang on 2017/10/23
+/**
+ * VideoSurfaceProcessor 视频流图像处理类，以{@link ITextureProvider}作为视频流图像输入。通过设置{@link IObserver}
+ * 来接收处理完毕的{@link RenderBean}，并做相应处理，诸如展示、编码等。
+ *
+ * @author wuwang
+ * @version v1.0 2017:10:27 08:37
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-public class TextureProcessor{
+public class VideoSurfaceProcessor{
 
     private boolean mGLThreadFlag=false;
     private Thread mGLThread;
     private WrapRenderer mRenderer;
     private Observable<RenderBean> observable;
-    private boolean isCamera=false;
     private final Object LOCK=new Object();
 
     private ITextureProvider mProvider;
 
-    public TextureProcessor(){
+    public VideoSurfaceProcessor(){
         observable=new Observable<>();
     }
 
@@ -76,10 +92,6 @@ public class TextureProcessor{
         }
     }
 
-    public void setAsCamera(boolean flag){
-        this.isCamera=flag;
-    }
-
     public void setRenderer(Renderer renderer){
         mRenderer=new WrapRenderer(renderer);
     }
@@ -117,7 +129,7 @@ public class TextureProcessor{
         FrameBuffer sourceFrame=new FrameBuffer();
         mRenderer.create();
         mRenderer.sizeChanged(mSourceWidth, mSourceHeight);
-        mRenderer.setFlag(isCamera?WrapRenderer.TYPE_CAMERA:WrapRenderer.TYPE_MOVE);
+        mRenderer.setFlag(mProvider.isLandscape()?WrapRenderer.TYPE_CAMERA:WrapRenderer.TYPE_MOVE);
 
         //用于其他的回调
         RenderBean rb=new RenderBean();
@@ -163,3 +175,4 @@ public class TextureProcessor{
 
     }
 }
+

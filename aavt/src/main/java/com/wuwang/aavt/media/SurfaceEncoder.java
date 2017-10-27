@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wuwang.aavt.media;
 
 import android.annotation.TargetApi;
@@ -11,11 +24,14 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-/*
- * Created by Wuwang on 2017/10/26
+/**
+ * SurfaceEncoder 从surface上进行硬编码，通过{@link #setStore(HardMediaStore)}来设置存储器进行存储
+ *
+ * @author wuwang
+ * @version v1.0 2017:10:27 08:29
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class Mp4SurfaceStore extends SurfaceShower{
+public class SurfaceEncoder extends SurfaceShower{
 
     private MediaConfig mConfig=new MediaConfig();
     private MediaCodec mVideoEncoder;
@@ -28,7 +44,7 @@ public class Mp4SurfaceStore extends SurfaceShower{
     private OnDrawEndListener mListener;
     private long startTime=-1;
 
-    public Mp4SurfaceStore(){
+    public SurfaceEncoder(){
         super.setOnDrawEndListener(new OnDrawEndListener() {
             @Override
             public void onDrawEnd(EGLSurface surface, RenderBean bean) {
@@ -77,13 +93,6 @@ public class Mp4SurfaceStore extends SurfaceShower{
         format.setInteger(MediaFormat.KEY_FRAME_RATE,config.frameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL,config.iframe);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        return format;
-    }
-
-    protected MediaFormat convertAudioConfigToFormat(MediaConfig.Audio config){
-        MediaFormat format=MediaFormat.createAudioFormat(config.mime,config.sampleRate,config.channelCount);
-        format.setInteger(MediaFormat.KEY_BIT_RATE,config.bitrate);
-        format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         return format;
     }
 
@@ -171,3 +180,4 @@ public class Mp4SurfaceStore extends SurfaceShower{
 
 
 }
+

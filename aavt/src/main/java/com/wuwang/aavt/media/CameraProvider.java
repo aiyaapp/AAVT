@@ -79,6 +79,11 @@ public class CameraProvider implements ITextureProvider {
         return -1;
     }
 
+    @Override
+    public boolean isLandscape() {
+        return true;
+    }
+
     private SurfaceTexture.OnFrameAvailableListener frameListener=new SurfaceTexture.OnFrameAvailableListener() {
 
         @Override

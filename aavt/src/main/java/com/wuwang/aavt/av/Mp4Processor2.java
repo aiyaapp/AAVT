@@ -16,9 +16,9 @@ package com.wuwang.aavt.av;
 import com.wuwang.aavt.media.HardMediaStore;
 import com.wuwang.aavt.media.Mp4Muxer;
 import com.wuwang.aavt.media.Mp4Provider;
-import com.wuwang.aavt.media.Mp4SurfaceStore;
+import com.wuwang.aavt.media.SurfaceEncoder;
 import com.wuwang.aavt.media.SurfaceShower;
-import com.wuwang.aavt.media.TextureProcessor;
+import com.wuwang.aavt.media.VideoSurfaceProcessor;
 
 /**
  * Mp4Processor2 用于处理Mp4文件
@@ -28,10 +28,10 @@ import com.wuwang.aavt.media.TextureProcessor;
  */
 public class Mp4Processor2 {
 
-    private TextureProcessor mTextureProcessor;
+    private VideoSurfaceProcessor mTextureProcessor;
     private Mp4Provider mMp4Provider;
     private SurfaceShower mShower;
-    private Mp4SurfaceStore mSurfaceStore;
+    private SurfaceEncoder mSurfaceStore;
     private HardMediaStore mMuxer;
 
     public Mp4Processor2(){
@@ -43,7 +43,7 @@ public class Mp4Processor2 {
         mShower.setOutputSize(720,1280);
 
         //用于编码图像
-        mSurfaceStore=new Mp4SurfaceStore();
+        mSurfaceStore=new SurfaceEncoder();
         mSurfaceStore.setStore(mMuxer);
 
         //用于音频
@@ -52,8 +52,7 @@ public class Mp4Processor2 {
         mMp4Provider.setStore(mMuxer);
 
         //用于处理视频图像
-        mTextureProcessor=new TextureProcessor();
-        mTextureProcessor.setAsCamera(false);
+        mTextureProcessor=new VideoSurfaceProcessor();
         mTextureProcessor.setTextureProvider(mMp4Provider);
         mTextureProcessor.addObserver(mShower);
         mTextureProcessor.addObserver(mSurfaceStore);
