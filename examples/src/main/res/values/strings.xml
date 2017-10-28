@@ -3,6 +3,7 @@
 
     <string name="mp4process">Mp4处理</string>
     <string name="camerarecord">视频录制</string>
+    <string name="yuvexport">YUV导出</string>
     <string name="open">打开</string>
     <string name="process">处理</string>
     <string name="play">播放</string>
@@ -13,4 +14,5 @@
 
     <string name="start_show">预览</string>
     <string name="start_rec">录制</string>
+    <string name="capture_yuv">捕获</string>
 </resources>

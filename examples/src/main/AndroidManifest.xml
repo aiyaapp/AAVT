@@ -29,6 +29,9 @@
         <activity android:name=".CameraRecorderActivity"
             android:screenOrientation="portrait">
         </activity>
+        <activity android:name=".YuvExportActivity"
+            android:screenOrientation="portrait">
+        </activity>
     </application>
 
 </manifest>

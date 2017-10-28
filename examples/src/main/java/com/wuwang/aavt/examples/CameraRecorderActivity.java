@@ -33,11 +33,9 @@ public class CameraRecorderActivity extends AppCompatActivity{
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_record);
-        mSurfaceView= (SurfaceView) findViewById(R.id.mSurface);
+        mSurfaceView= (SurfaceView) findViewById(R.id.mSurfaceView);
         mTvRecord= (TextView) findViewById(R.id.mTvRec);
         mTvPreview= (TextView) findViewById(R.id.mTvShow);
-
-        long startTime=System.currentTimeMillis();
 
         mCamera =new CameraRecorder2();
         mCamera.setRenderer(new BeautyFilter(getResources()).setBeautyLevel(4));

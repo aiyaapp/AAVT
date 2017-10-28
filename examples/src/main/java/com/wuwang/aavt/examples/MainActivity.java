@@ -21,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.mCameraRecord:
                 startActivity(new Intent(this,CameraRecorderActivity.class));
                 break;
+            case R.id.mYuvExport:
+                startActivity(new Intent(this,YuvExportActivity.class));
+                break;
         }
     }
 }
