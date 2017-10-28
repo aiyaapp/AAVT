@@ -21,11 +21,14 @@ import android.opengl.EGLSurface;
 import android.os.Build;
 import android.util.Log;
 
+import com.wuwang.aavt.media.hard.HardMediaData;
+import com.wuwang.aavt.media.hard.IHardStore;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * SurfaceEncoder 从surface上进行硬编码，通过{@link #setStore(HardMediaStore)}来设置存储器进行存储
+ * SurfaceEncoder 从surface上进行硬编码，通过{@link #setStore(IHardStore)}来设置存储器进行存储
  *
  * @author wuwang
  * @version v1.0 2017:10:27 08:29
@@ -38,7 +41,7 @@ public class SurfaceEncoder extends SurfaceShower{
     private boolean isEncodeStarted=false;
     private static final int TIME_OUT=1000;
 
-    private HardMediaStore mStore;
+    private IHardStore mStore;
     private int mVideoTrack=-1;
 
     private OnDrawEndListener mListener;
@@ -76,7 +79,7 @@ public class SurfaceEncoder extends SurfaceShower{
         this.mConfig=config;
     }
 
-    public void setStore(HardMediaStore store){
+    public void setStore(IHardStore store){
         this.mStore=store;
     }
 
@@ -134,7 +137,7 @@ public class SurfaceEncoder extends SurfaceShower{
                 if(mOutputIndex>=0){
                     ByteBuffer buffer= CodecUtil.getOutputBuffer(mVideoEncoder,mOutputIndex);
                     if(mStore!=null){
-                        mStore.addData(mVideoTrack,buffer,info);
+                        mStore.addData(mVideoTrack,new HardMediaData(buffer,info));
                     }
                     mVideoEncoder.releaseOutputBuffer(mOutputIndex,false);
                     if(info.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
@@ -146,7 +149,7 @@ public class SurfaceEncoder extends SurfaceShower{
                 }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                     MediaFormat format=mVideoEncoder.getOutputFormat();
                     if(mStore!=null){
-                        mVideoTrack=mStore.addFormat(format);
+                        mVideoTrack=mStore.addTrack(format);
                     }
                 }else if(mOutputIndex== MediaCodec.INFO_TRY_AGAIN_LATER&&!isEnd){
                     break;

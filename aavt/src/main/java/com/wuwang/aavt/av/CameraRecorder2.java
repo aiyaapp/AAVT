@@ -15,13 +15,14 @@ package com.wuwang.aavt.av;
 
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.media.CameraProvider;
-import com.wuwang.aavt.media.HardMediaStore;
 import com.wuwang.aavt.media.ITextureProvider;
-import com.wuwang.aavt.media.Mp4Muxer;
 import com.wuwang.aavt.media.SurfaceEncoder;
 import com.wuwang.aavt.media.SoundRecorder;
 import com.wuwang.aavt.media.SurfaceShower;
 import com.wuwang.aavt.media.VideoSurfaceProcessor;
+import com.wuwang.aavt.media.av.AvException;
+import com.wuwang.aavt.media.hard.IHardStore;
+import com.wuwang.aavt.media.hard.Mp4MuxStore;
 
 /**
  * CameraRecorder2
@@ -36,13 +37,13 @@ public class CameraRecorder2 {
     private ITextureProvider mCameraProvider;
     private SurfaceShower mShower;
     private SurfaceEncoder mSurfaceStore;
-    private HardMediaStore mMuxer;
+    private IHardStore mMuxer;
 
     private SoundRecorder mSoundRecord;
 
     public CameraRecorder2(){
         //用于视频混流和存储
-        mMuxer=new Mp4Muxer(true);
+        mMuxer=new Mp4MuxStore(true);
 
         //用于预览图像
         mShower=new SurfaceShower();
@@ -134,6 +135,11 @@ public class CameraRecorder2 {
     public void stopRecord(){
         mSurfaceStore.close();
         mSoundRecord.stop();
+        try {
+            mMuxer.close();
+        } catch (AvException e) {
+            e.printStackTrace();
+        }
     }
 
 }

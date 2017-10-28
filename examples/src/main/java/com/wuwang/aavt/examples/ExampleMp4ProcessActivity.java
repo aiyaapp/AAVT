@@ -50,47 +50,6 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                 mMp4Processor.stopPreview();
             }
         });
-//        mProcessor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
-//            @Override
-//            public void onProgress(long max, long current) {
-//                Log.e("wuwang","max/current:"+max+"/"+current);
-//            }
-//
-//            @Override
-//            public void onComplete(String path) {
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//            }
-//        });
-//        mProcessor.setRenderer(new Renderer() {
-//
-//            Filter filter;
-//
-//            @Override
-//            public void create() {
-//                filter=new BlackMagicFilter(getResources());
-//                filter.create();
-//            }
-//
-//            @Override
-//            public void sizeChanged(int width, int height) {
-//                filter.sizeChanged(width, height);
-//            }
-//
-//            @Override
-//            public void draw(int texture) {
-//                filter.draw(texture);
-//            }
-//
-//            @Override
-//            public void destroy() {
-//                filter.destroy();
-//            }
-//        });
     }
 
     public void onClick(View view){
@@ -117,6 +76,8 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                 Intent v=new Intent(Intent.ACTION_VIEW);
                 v.setDataAndType(Uri.parse(tempPath),"video/mp4");
                 startActivity(v);
+                break;
+            default:
                 break;
         }
     }

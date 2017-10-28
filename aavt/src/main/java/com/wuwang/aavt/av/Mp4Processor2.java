@@ -13,12 +13,13 @@
  */
 package com.wuwang.aavt.av;
 
-import com.wuwang.aavt.media.HardMediaStore;
-import com.wuwang.aavt.media.Mp4Muxer;
 import com.wuwang.aavt.media.Mp4Provider;
 import com.wuwang.aavt.media.SurfaceEncoder;
 import com.wuwang.aavt.media.SurfaceShower;
 import com.wuwang.aavt.media.VideoSurfaceProcessor;
+import com.wuwang.aavt.media.av.AvException;
+import com.wuwang.aavt.media.hard.IHardStore;
+import com.wuwang.aavt.media.hard.Mp4MuxStore;
 
 /**
  * Mp4Processor2 用于处理Mp4文件
@@ -32,11 +33,11 @@ public class Mp4Processor2 {
     private Mp4Provider mMp4Provider;
     private SurfaceShower mShower;
     private SurfaceEncoder mSurfaceStore;
-    private HardMediaStore mMuxer;
+    private IHardStore mMuxer;
 
     public Mp4Processor2(){
         //用于视频混流和存储
-        mMuxer=new Mp4Muxer(true);
+        mMuxer=new Mp4MuxStore(true);
 
         //用于预览图像
         mShower=new SurfaceShower();

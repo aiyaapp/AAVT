@@ -12,6 +12,8 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import com.wuwang.aavt.Aavt;
+import com.wuwang.aavt.media.hard.HardMediaData;
+import com.wuwang.aavt.media.hard.IHardStore;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,13 +34,13 @@ public class SoundRecorder {
     private MediaCodec mAudioEncoder;
     private MediaConfig mConfig=new MediaConfig();
     private boolean isStarted=false;
-    private HardMediaStore mStore;
+    private IHardStore mStore;
     private static final int TIME_OUT=1000;
     private int mAudioTrack=-1;
     private long startTime=0;
     private boolean stopFlag=false;
 
-    public SoundRecorder(HardMediaStore store){
+    public SoundRecorder(IHardStore store){
         this.mStore=store;
     }
 
@@ -102,7 +104,7 @@ public class SoundRecorder {
                 int outputIndex=mAudioEncoder.dequeueOutputBuffer(info,TIME_OUT);
                 if(outputIndex>=0){
                     if(mStore!=null){
-                        mStore.addData(mAudioTrack,CodecUtil.getOutputBuffer(mAudioEncoder,outputIndex),info);
+                        mStore.addData(mAudioTrack,new HardMediaData(CodecUtil.getOutputBuffer(mAudioEncoder,outputIndex),info));
                     }
                     mAudioEncoder.releaseOutputBuffer(outputIndex,false);
                     if(info.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
@@ -114,7 +116,7 @@ public class SoundRecorder {
                     break;
                 }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                     Log.e(Aavt.debugTag,"get audio output format changed ->"+mAudioEncoder.getOutputFormat().toString());
-                    mAudioTrack=mStore.addFormat(mAudioEncoder.getOutputFormat());
+                    mAudioTrack=mStore.addTrack(mAudioEncoder.getOutputFormat());
                 }
             }
         }

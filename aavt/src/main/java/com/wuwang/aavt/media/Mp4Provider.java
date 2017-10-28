@@ -12,6 +12,9 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.wuwang.aavt.Aavt;
+import com.wuwang.aavt.media.av.AvException;
+import com.wuwang.aavt.media.hard.HardMediaData;
+import com.wuwang.aavt.media.hard.IHardStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +43,7 @@ public class Mp4Provider implements ITextureProvider {
 
     private boolean videoProvideEndFlag=false;
 
-    private HardMediaStore mStore;
+    private IHardStore mStore;
 
     private long nowTimeStamp=0;
     private MediaCodec.BufferInfo videoDecodeBufferInfo=new MediaCodec.BufferInfo();
@@ -93,7 +96,7 @@ public class Mp4Provider implements ITextureProvider {
         return true;
     }
 
-    public void setStore(HardMediaStore store){
+    public void setStore(IHardStore store){
         this.mStore=store;
     }
 
@@ -161,6 +164,11 @@ public class Mp4Provider implements ITextureProvider {
                 audioDecodeStep();
                 mExtractor.release();
                 mExtractor=null;
+                try {
+                    mStore.close();
+                } catch (AvException e) {
+                    e.printStackTrace();
+                }
             }
         });
         mDecodeThread.start();
@@ -186,7 +194,7 @@ public class Mp4Provider implements ITextureProvider {
                     Log.e(Aavt.debugTag,"audio sampleTime= "+info.presentationTimeUs+"/"+mVideoStopTimeStamp);
                     isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
                     Log.e(Aavt.debugTag,"is End= "+isAudioEnd );
-                    mStore.addData(mAudioEncodeTrack,buffer,info);
+                    mStore.addData(mAudioEncodeTrack,new HardMediaData(buffer,info));
                     if(isAudioEnd){
                         break;
                     }
@@ -194,7 +202,7 @@ public class Mp4Provider implements ITextureProvider {
                     Log.e(Aavt.debugTag,"is End= "+true );
                     info.size=0;
                     info.flags=MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                    mStore.addData(mAudioEncodeTrack,buffer,info);
+                    mStore.addData(mAudioEncodeTrack,new HardMediaData(buffer,info));
                     isTimeEnd=true;
                     break;
                 }
@@ -214,7 +222,7 @@ public class Mp4Provider implements ITextureProvider {
             mDecodeSem=new Semaphore(1);
             videoProvideEndFlag=false;
             isUserWantToStop=false;
-            mAudioEncodeTrack=mStore.addFormat(mExtractor.getTrackFormat(mAudioDecodeTrack));
+            mAudioEncodeTrack=mStore.addTrack(mExtractor.getTrackFormat(mAudioDecodeTrack));
             MediaFormat format=mExtractor.getTrackFormat(mVideoDecodeTrack);
             mVideoDecoder = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME));
             mVideoDecoder.configure(format,new Surface(surface),null,0);
@@ -251,6 +259,5 @@ public class Mp4Provider implements ITextureProvider {
     public boolean isLandscape() {
         return false;
     }
-
 
 }

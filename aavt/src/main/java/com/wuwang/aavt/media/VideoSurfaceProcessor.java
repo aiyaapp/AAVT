@@ -110,6 +110,10 @@ public class VideoSurfaceProcessor{
         Point size=mProvider.open(mInputSurfaceTexture);
         if(size.x<=0||size.y<=0){
             //todo 错误处理
+            destroyGL(egl);
+            synchronized (LOCK){
+                LOCK.notifyAll();
+            }
             return;
         }
         int mSourceWidth = size.x;
@@ -156,22 +160,26 @@ public class VideoSurfaceProcessor{
         }
         Log.e("textureprocess","out of gl thread loop");
         synchronized (LOCK){
-            mGLThreadFlag=false;
             rb.endFlag=true;
             observable.notify(rb);
-            EGL14.eglMakeCurrent(egl.getDisplay(), EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
-            EGL14.eglDestroyContext(egl.getDisplay(),egl.getDefaultContext());
-            EGL14.eglTerminate(egl.getDisplay());
+            destroyGL(egl);
             LOCK.notifyAll();
             Log.e("wuwang","gl thread exit");
         }
+    }
+
+    private void destroyGL(EGLHelper egl){
+        mGLThreadFlag=false;
+        EGL14.eglMakeCurrent(egl.getDisplay(), EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+        EGL14.eglDestroyContext(egl.getDisplay(),egl.getDefaultContext());
+        EGL14.eglTerminate(egl.getDisplay());
     }
 
     public void addObserver(IObserver<RenderBean> observer) {
         observable.addObserver(observer);
     }
 
-    public void error(int id,String msg) {
+    protected void error(int id,String msg) {
 
     }
 }
