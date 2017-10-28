@@ -10,7 +10,6 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -134,7 +133,7 @@ public class EGLHelper {
         return makeCurrent(mEGLSurface,mEGLContext);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void setPresentationTime(EGLSurface surface, long time){
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay,surface,time);
     }
