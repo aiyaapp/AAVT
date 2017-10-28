@@ -5,7 +5,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/mSurfaceView" />
-
+    <ImageView
+        android:layout_width="368dp"
+        android:layout_height="640dp"
+        android:contentDescription="@string/app_name"
+        android:layout_centerInParent="true"
+        android:onClick="onClick"
+        android:clickable="true"
+        android:id="@+id/mImage"
+        android:focusable="true" />
     <TextView
         android:layout_width="80dp"
         android:layout_height="80dp"
@@ -14,27 +22,11 @@
         android:gravity="center"
         android:textSize="16sp"
         android:textColor="#FFFFFF"
-        android:text="@string/start_rec"
+        android:text="@string/capture_yuv"
         android:layout_centerHorizontal="true"
         android:clickable="true"
         android:onClick="onClick"
-        android:id="@+id/mTvRec"
+        android:id="@+id/mTvCap"
         android:layout_marginBottom="20dp" />
 
-    <TextView
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_alignTop="@id/mTvRec"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="30dp"
-        android:background="@drawable/tv_start_bg"
-        android:gravity="center"
-        android:textSize="12sp"
-        android:textColor="#FFFFFF"
-        android:text="@string/start_show"
-        android:clickable="true"
-        android:onClick="onClick"
-        android:id="@+id/mTvShow"/>
 </RelativeLayout>

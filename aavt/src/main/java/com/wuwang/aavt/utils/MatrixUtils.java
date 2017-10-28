@@ -81,6 +81,8 @@ public enum MatrixUtils {
                     case TYPE_FITEND:
                         Matrix.orthoM(projection,0,-1,1,-1,2*sWhImg/sWhView-1,1,3);
                         break;
+                    default:
+                        break;
                 }
             }else{
                 switch (type){
@@ -95,6 +97,8 @@ public enum MatrixUtils {
                         break;
                     case TYPE_FITEND:
                         Matrix.orthoM(projection,0,1-2*sWhView/sWhImg,1,-1,1,1,3);
+                        break;
+                    default:
                         break;
                 }
             }

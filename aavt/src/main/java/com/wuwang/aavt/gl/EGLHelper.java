@@ -62,14 +62,15 @@ public class EGLHelper {
                 EGL14.EGL_ALPHA_SIZE, 8, //指定Alpha大小，以上四项实际上指定了像素格式
                 EGL14.EGL_DEPTH_SIZE, 16, //指定深度缓存(Z Buffer)大小
                 EGL14.EGL_RENDERABLE_TYPE, 4, //指定渲染api类别, 如上一小节描述，这里或者是硬编码的4(EGL14.EGL_OPENGL_ES2_BIT)
-                EGL14.EGL_NONE };  //总是以EGL14.EGL_NONE结尾
+                EGL14.EGL_NONE           //总是以EGL14.EGL_NONE结尾
+        };
 
-        int glAttrs[] = {
+        int[] glAttrs = {
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,  //0x3098是EGL14.EGL_CONTEXT_CLIENT_VERSION，但是4.2以前没有EGL14
                 EGL14.EGL_NONE
         };
 
-        int bufferAttrs[]={
+        int[] bufferAttrs={
                 EGL14.EGL_WIDTH,eglWidth,
                 EGL14.EGL_HEIGHT,eglHeight,
                 EGL14.EGL_NONE
@@ -109,6 +110,8 @@ public class EGLHelper {
                 break;
             case EGL14.EGL_PBUFFER_BIT:
                 mEGLSurface= EGL14.eglCreatePbufferSurface(mEGLDisplay,mEGLConfig,bufferAttrs,0);
+                break;
+            default:
                 break;
         }
         if(mEGLSurface== EGL14.EGL_NO_SURFACE){

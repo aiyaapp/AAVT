@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 
+@Deprecated
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class CameraRecorder {
 
@@ -48,7 +49,6 @@ public class CameraRecorder {
     private SurfaceTexture mInputTexture;
     private Surface mOutputSurface;
     private Surface mEncodeSurface;
-//    private EGLHelper mEncodeEGLHelper;
     private EGLHelper mShowEGLHelper;
     private Configuration mConfig;
     private String mOutputPath;
@@ -183,7 +183,7 @@ public class CameraRecorder {
                 @Override
                 public void run() {
                     mAudioRecord.startRecording();
-                    while (!audioEncodeStep(isTryStopAudio));
+                    while (!audioEncodeStep(isTryStopAudio)){};
                     mAudioRecord.stop();
                 }
             });

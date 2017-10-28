@@ -12,43 +12,60 @@ import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Toast;
 
-import com.wuwang.aavt.av.Mp4Processor;
-import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.BlackMagicFilter;
-import com.wuwang.aavt.gl.Filter;
-import com.wuwang.aavt.core.Renderer;
-
-import java.io.IOException;
+import com.wuwang.aavt.av.Mp4Processor2;
 
 public class ExampleMp4ProcessActivity extends AppCompatActivity {
 
-    private Mp4Processor mProcessor;
+    private SurfaceView mSurfaceView;
+    private Mp4Processor2 mMp4Processor;
+    private String tempPath= Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.mp4";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mp4);
-        mProcessor=new Mp4Processor();
-        mProcessor.setOutputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4");
-        mProcessor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
+        mMp4Processor=new Mp4Processor2();
+        mMp4Processor.setInputPath(Environment.getExternalStorageDirectory().getAbsolutePath()+"/a.mp4");
+        mMp4Processor.setOutputPath(tempPath);
+        mSurfaceView= (SurfaceView) findViewById(R.id.mSurfaceView);
+        mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
-            public void onProgress(long max, long current) {
-                Log.e("wuwang","max/current:"+max+"/"+current);
+            public void surfaceCreated(SurfaceHolder holder) {
+
             }
 
             @Override
-            public void onComplete(String path) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
-                    }
-                });
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                mMp4Processor.setSurface(holder);
+                mMp4Processor.setPreviewSize(width, height);
+                mMp4Processor.startPreview();
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                mMp4Processor.stopPreview();
             }
         });
+//        mProcessor.setOnCompleteListener(new Mp4Processor.OnProgressListener() {
+//            @Override
+//            public void onProgress(long max, long current) {
+//                Log.e("wuwang","max/current:"+max+"/"+current);
+//            }
+//
+//            @Override
+//            public void onComplete(String path) {
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(getApplicationContext(),"处理完毕",Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//            }
+//        });
 //        mProcessor.setRenderer(new Renderer() {
 //
 //            Filter filter;
@@ -89,22 +106,16 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
                 break;
             case R.id.mProcess:
-                try {
-                    mProcessor.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                mMp4Processor.startRecord();
+                mMp4Processor.open();
                 break;
             case R.id.mStop:
-                try {
-                    mProcessor.stop();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                mMp4Processor.stopRecord();
+                mMp4Processor.close();
                 break;
             case R.id.mPlay:
                 Intent v=new Intent(Intent.ACTION_VIEW);
-                v.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath()+"/temp.mp4"),"video/mp4");
+                v.setDataAndType(Uri.parse(tempPath),"video/mp4");
                 startActivity(v);
                 break;
         }
@@ -115,10 +126,7 @@ public class ExampleMp4ProcessActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             String path = getRealFilePath(data.getData());
             if (path != null) {
-//                Configuration config = new Configuration();
-//                config.sourcePath = path;
-//                mProviders.setConfiguration(config);
-                mProcessor.setInputPath(path);
+                mMp4Processor.setInputPath(path);
             }
         }
     }

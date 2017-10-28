@@ -41,7 +41,10 @@ void main() {
     sum = sum / gaussianWeightTotal;
     centralColor = texture2D( uTexture, vTextureCo ).rgb;
     sampleColor = centralColor.g - sum + 0.5;
-    for (int i = 0; i < uIternum; ++i) {
+    for (int i = 0; i < 100; i++) {
+        if(i>=uIternum){
+            break;
+        }
         if (sampleColor <= 0.5) {
             sampleColor = sampleColor * sampleColor * 2.0;
         }
