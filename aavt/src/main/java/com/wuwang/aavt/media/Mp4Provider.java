@@ -45,9 +45,10 @@ public class Mp4Provider implements ITextureProvider {
 
     private IHardStore mStore;
 
-    private long nowTimeStamp=0;
+    private long nowTimeStamp=-1;
     private MediaCodec.BufferInfo videoDecodeBufferInfo=new MediaCodec.BufferInfo();
     private int mAudioEncodeTrack=-1;
+    private long mVideoTotalTime=-1;
 
     public Mp4Provider(){
 
@@ -65,6 +66,7 @@ public class Mp4Provider implements ITextureProvider {
         try {
             MediaMetadataRetriever mMetRet=new MediaMetadataRetriever();
             mMetRet.setDataSource(mPath);
+            mVideoTotalTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
             mExtractor=new MediaExtractor();
             mExtractor.setDataSource(mPath);
             int trackCount=mExtractor.getTrackCount();
@@ -139,6 +141,10 @@ public class Mp4Provider implements ITextureProvider {
             }
         }
         return isVideoExtractorEnd||isUserWantToStop;
+    }
+
+    public long getMediaDuration(){
+        return mVideoTotalTime;
     }
 
     private void startDecodeThread(){
