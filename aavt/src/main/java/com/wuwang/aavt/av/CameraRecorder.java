@@ -18,11 +18,11 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.wuwang.aavt.Aavt;
-import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.EGLHelper;
 import com.wuwang.aavt.gl.FrameBuffer;
+import com.wuwang.aavt.gl.LazyFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.io.File;
@@ -265,8 +265,8 @@ public class CameraRecorder {
             mRenderer.sizeChanged(mPreviewWidth,mPreviewHeight);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,t[0]);
 
-            Filter mShowFilter=new BaseFilter();
-            Filter mRecFilter=new BaseFilter();
+            BaseFilter mShowFilter=new LazyFilter();
+            BaseFilter mRecFilter=new LazyFilter();
             MatrixUtils.flip(mShowFilter.getVertexMatrix(),false,true);
             mShowFilter.create();
             mShowFilter.sizeChanged(mPreviewWidth,mPreviewHeight);

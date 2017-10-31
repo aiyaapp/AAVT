@@ -12,8 +12,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.wuwang.aavt.av.CameraRecorder2;
+import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.BeautyFilter;
-import com.wuwang.aavt.gl.Filter;
 import com.wuwang.aavt.gl.GrayFilter;
 
 public class CameraRecorderActivity extends AppCompatActivity{
@@ -22,7 +22,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
     private TextView mTvPreview,mTvRecord;
     private boolean isPreviewOpen=false;
     private boolean isRecordOpen=false;
-    private Filter mFilter;
+    private BaseFilter mFilter;
     private int mCameraWidth,mCameraHeight;
 
     private CameraRecorder2 mCamera;

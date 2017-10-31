@@ -18,7 +18,7 @@ import android.opengl.GLES20;
 
 import com.wuwang.aavt.core.IObserver;
 import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.Filter;
+import com.wuwang.aavt.gl.LazyFilter;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 /**
@@ -31,7 +31,7 @@ public class SurfaceShower implements IObserver<RenderBean> {
 
     private EGLSurface mShowSurface;
     private boolean isShow=false;
-    private Filter mFilter;
+    private BaseFilter mFilter;
     private Object mSurface;
     private int mWidth;
     private int mHeight;
@@ -75,7 +75,7 @@ public class SurfaceShower implements IObserver<RenderBean> {
         }else if(isShow&&mSurface!=null){
             if(mShowSurface==null){
                 mShowSurface=rb.egl.createWindowSurface(mSurface);
-                mFilter=new BaseFilter();
+                mFilter=new LazyFilter();
                 mFilter.create();
                 mFilter.sizeChanged(rb.sourceWidth, rb.sourceHeight);
                 MatrixUtils.getMatrix(mFilter.getVertexMatrix(),mMatrixType,rb.sourceWidth,rb.sourceHeight,

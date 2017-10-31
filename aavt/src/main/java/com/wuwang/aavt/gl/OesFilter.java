@@ -11,7 +11,7 @@ import android.opengl.GLES20;
 import android.os.Build;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
-public class OesFilter extends Filter {
+public class OesFilter extends BaseFilter {
 
     public OesFilter(Resources resource) {
         super(resource,"shader/oes.vert", "shader/oes.frag");

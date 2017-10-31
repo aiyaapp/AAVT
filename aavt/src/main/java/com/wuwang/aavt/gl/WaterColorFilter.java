@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  * Created by aiya on 2017/9/23.
  */
 
-public class WaterColorFilter extends Filter {
+public class WaterColorFilter extends BaseFilter {
 
     private int mGLWidth;
     private int mGLHeight;

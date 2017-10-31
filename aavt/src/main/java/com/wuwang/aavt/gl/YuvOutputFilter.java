@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wuwang.aavt.gl;
 
 import android.content.res.Resources;
@@ -8,10 +21,12 @@ import com.wuwang.aavt.utils.MatrixUtils;
 import java.nio.ByteBuffer;
 
 /**
- * Created by aiya on 2017/9/21.
+ * YuvOutputFilter GPU转换rgba纹理为YUV的滤镜
+ *
+ * @author wuwang
+ * @version v1.0 2017:10:31 11:55
  */
-
-public class YuvOutputFilter extends BaseFilter {
+public class YuvOutputFilter extends LazyFilter {
 
     private ByteBuffer mTempBuffer;
 
@@ -22,7 +37,7 @@ public class YuvOutputFilter extends BaseFilter {
     public static final int EXPORT_TYPE_NV12=3;
     public static final int EXPORT_TYPE_NV21=4;
 
-    private Filter mExportFilter;
+    private BaseFilter mExportFilter;
     private FrameBuffer mFrameBuffer;
 
     public YuvOutputFilter(int type) {
@@ -32,7 +47,7 @@ public class YuvOutputFilter extends BaseFilter {
         MatrixUtils.flip(mExportFilter.getVertexMatrix(),false,true);
     }
 
-    public YuvOutputFilter(Resources res,String yuvShader){
+    public YuvOutputFilter(Resources res, String yuvShader){
         super();
         mExportFilter=new ExportFilter(res,yuvShader);
         mFrameBuffer=new FrameBuffer();
@@ -53,7 +68,7 @@ public class YuvOutputFilter extends BaseFilter {
     @Override
     protected void onDraw() {
         //fix wrong color when blend
-        boolean isBlend=GLES20.glIsEnabled(GLES20.GL_BLEND);
+        boolean isBlend= GLES20.glIsEnabled(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_BLEND);
 
         GLES20.glGetIntegerv(GLES20.GL_VIEWPORT,lastViewPort,0);
@@ -207,14 +222,14 @@ public class YuvOutputFilter extends BaseFilter {
                     break;
                 case YuvOutputFilter.EXPORT_TYPE_NV12:
                     sb.append("void main() {\n" +
-                        "    if(vTextureCo.y<0.2500){\n" +
-                        "        gl_FragColor=calculateY();\n" +
-                        "    }else if(vTextureCo.y<0.3750){\n" +
-                        "        gl_FragColor=calculateUV(1./uWidth,1./uHeight);\n" +
-                        "    }else{\n" +
-                        "        gl_FragColor=vec4(0,0,0,0);\n" +
-                        "    }\n" +
-                        "}");
+                            "    if(vTextureCo.y<0.2500){\n" +
+                            "        gl_FragColor=calculateY();\n" +
+                            "    }else if(vTextureCo.y<0.3750){\n" +
+                            "        gl_FragColor=calculateUV(1./uWidth,1./uHeight);\n" +
+                            "    }else{\n" +
+                            "        gl_FragColor=vec4(0,0,0,0);\n" +
+                            "    }\n" +
+                            "}");
                     break;
                 case YuvOutputFilter.EXPORT_TYPE_NV21:
                 default:
@@ -233,7 +248,7 @@ public class YuvOutputFilter extends BaseFilter {
         }
     }
 
-    private static class ExportFilter extends Filter{
+    private static class ExportFilter extends BaseFilter{
 
         private int mGLWidth;
         private int mGLHeight;
@@ -262,3 +277,4 @@ public class YuvOutputFilter extends BaseFilter {
     }
 
 }
+

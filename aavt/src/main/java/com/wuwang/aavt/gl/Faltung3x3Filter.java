@@ -7,7 +7,7 @@ import android.opengl.GLES20;
  * Created by wuwang on 2017/10/1.
  */
 
-public class Faltung3x3Filter extends Filter {
+public class Faltung3x3Filter extends BaseFilter {
 
     private float[] mFaltung;
     private int mGLFaltung;

@@ -9,7 +9,7 @@ import android.util.Log;
 import com.wuwang.aavt.av.Mp4Processor;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.Filter;
+import com.wuwang.aavt.gl.LazyFilter;
 
 import java.io.IOException;
 
@@ -34,11 +34,11 @@ public class VideoUtils {
         });
         processor.setRenderer(new Renderer() {
 
-            Filter mFilter;
+            BaseFilter mFilter;
 
             @Override
             public void create() {
-                mFilter=new BaseFilter();
+                mFilter=new LazyFilter();
                 mFilter.create();
             }
 

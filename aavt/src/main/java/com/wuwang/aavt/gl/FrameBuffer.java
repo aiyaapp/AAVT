@@ -1,23 +1,48 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wuwang.aavt.gl;
 
 import android.opengl.GLES20;
-import android.util.Log;
-
-import com.wuwang.aavt.Aavt;
 
 /**
- * Created by aiya on 2017/9/13.
+ * FrameBuffer 工具类
+ *
+ * @author wuwang
+ * @version v1.0 2017:10:31 10:31
  */
-
 public class FrameBuffer {
 
     private int[] mFrameTemp;
     private int lastWidth=0,lastHeight=0;
 
+    /**
+     * 绑定到FrameBuffer，不使用RenderBuffer。{@link #bindFrameBuffer(int, int, boolean)}
+     * @param width 宽度
+     * @param height 高度
+     * @return 绑定结果，0表示成功，其他值为GL错误
+     */
     public int bindFrameBuffer(int width,int height){
         return bindFrameBuffer(width, height,false);
     }
 
+    /**
+     * 绑定到FrameBuffer
+     * @param width 宽度
+     * @param height 高度
+     * @param hasRenderBuffer 是否使用renderBuffer
+     * @return 绑定结果，0表示成功，其他值为GL错误
+     */
     public int bindFrameBuffer(int width,int height,boolean hasRenderBuffer){
         if(lastWidth!=width||lastHeight!=height){
             destroyFrameBuffer();
@@ -25,15 +50,28 @@ public class FrameBuffer {
             this.lastHeight=height;
         }
         if(mFrameTemp==null){
-            return createFrameBuffer(hasRenderBuffer,width,height,GLES20.GL_TEXTURE_2D,GLES20.GL_RGBA,
+            return createFrameBuffer(hasRenderBuffer,width,height, GLES20.GL_TEXTURE_2D,GLES20.GL_RGBA,
                     GLES20.GL_NEAREST,GLES20.GL_LINEAR,GLES20.GL_CLAMP_TO_EDGE,GLES20.GL_CLAMP_TO_EDGE);
         }else{
             return bindFrameBuffer();
         }
     }
 
+    /**
+     * 创建FrameBuffer
+     * @param hasRenderBuffer 是否启用RenderBuffer
+     * @param width 宽度
+     * @param height 高度
+     * @param texType 类型，一般为{@link GLES20#GL_TEXTURE_2D}
+     * @param texFormat 纹理格式，一般为{@link GLES20#GL_RGBA}、{@link GLES20#GL_RGB}等
+     * @param minParams 纹理的缩小过滤参数
+     * @param maxParams 纹理的放大过滤参数
+     * @param wrapS 纹理的S环绕参数
+     * @param wrapT 纹理的W环绕参数
+     * @return 创建结果，0表示成功，其他值为GL错误
+     */
     public int createFrameBuffer(boolean hasRenderBuffer,int width,int height,int texType,int texFormat,
-                                  int minParams,int maxParams,int wrapS,int wrapT){
+                                 int minParams,int maxParams,int wrapS,int wrapT){
         mFrameTemp=new int[4];
         GLES20.glGenFramebuffers(1,mFrameTemp,0);
         GLES20.glGenTextures(1,mFrameTemp,1);
@@ -62,6 +100,10 @@ public class FrameBuffer {
         return GLES20.glGetError();
     }
 
+    /**
+     * 绑定FrameBuffer，只有之前创建过FrameBuffer，才能调用此方法进行绑定
+     * @return 绑定结果
+     */
     public int bindFrameBuffer(){
         if(mFrameTemp==null){
             return -1;
@@ -71,14 +113,24 @@ public class FrameBuffer {
         return GLES20.glGetError();
     }
 
+    /**
+     * 取消FrameBuffer绑定
+     */
     public void unBindFrameBuffer(){
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,mFrameTemp[3]);
     }
 
+    /**
+     * 获取绘制再FrameBuffer中的内容
+     * @return FrameBuffer绘制内容的纹理ID
+     */
     public int getCacheTextureId(){
         return mFrameTemp!=null?mFrameTemp[1]:-1;
     }
 
+    /**
+     * 销毁FrameBuffer
+     */
     public void destroyFrameBuffer(){
         if(mFrameTemp!=null){
             GLES20.glDeleteFramebuffers(1,mFrameTemp,0);
@@ -91,3 +143,4 @@ public class FrameBuffer {
     }
 
 }
+

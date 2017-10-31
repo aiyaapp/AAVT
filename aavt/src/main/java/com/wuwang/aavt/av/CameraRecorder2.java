@@ -25,7 +25,7 @@ import com.wuwang.aavt.media.hard.IHardStore;
 import com.wuwang.aavt.media.hard.Mp4MuxStore;
 
 /**
- * CameraRecorder2
+ * CameraRecorder2 相机预览及录制工具类
  *
  * @author wuwang
  * @version v1.0 2017:10:26 18:35
