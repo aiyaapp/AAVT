@@ -19,7 +19,6 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.opengl.EGLSurface;
 import android.os.Build;
-import android.util.Log;
 
 import com.wuwang.aavt.log.AvLog;
 import com.wuwang.aavt.media.hard.HardMediaData;

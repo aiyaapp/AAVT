@@ -23,6 +23,7 @@ import com.wuwang.aavt.utils.MatrixUtils;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.LinkedList;
 
 /**
  * BaseFilter 滤镜的基类。对于滤镜而言，要求使用者外部调用的时候必须调用的方法为
@@ -74,6 +75,7 @@ public abstract class BaseFilter implements Renderer {
     private boolean isUseSize=false;
 
     private FrameBuffer mFrameTemp;
+    private final LinkedList<Runnable> mTasks=new LinkedList<>();
 
     protected BaseFilter(Resources resource,String vertex,String fragment){
         this.mRes=resource;
@@ -208,6 +210,9 @@ public abstract class BaseFilter implements Renderer {
 
     protected void onUseProgram(){
         GLES20.glUseProgram(mGLProgram);
+        while (!mTasks.isEmpty()){
+            mTasks.removeFirst().run();
+        }
     }
 
     protected void onDraw(){
@@ -223,6 +228,10 @@ public abstract class BaseFilter implements Renderer {
     protected void onClear(){
         GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+    }
+
+    protected void runOnGLThread(Runnable runnable){
+        mTasks.addLast(runnable);
     }
 
     /**

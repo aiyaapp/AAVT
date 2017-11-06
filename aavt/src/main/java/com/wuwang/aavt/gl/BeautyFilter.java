@@ -74,18 +74,16 @@ public class BeautyFilter extends BaseFilter {
         return this;
     }
 
-    private void a(int a,float b,float c){
-        this.iternum=a;
-        this.aaCoef=b;
-        this.mixCoef=c;
+    private void a(final int a, final float b, final float c){
+        runOnGLThread(new Runnable() {
+            @Override
+            public void run() {
+                GLES20.glUniform1f(mGLaaCoef,b);
+                GLES20.glUniform1f(mGLmixCoef,c);
+                GLES20.glUniform1i(mGLiternum,a);
+            }
+        });
     }
 
-    @Override
-    protected void onSetExpandData() {
-        super.onSetExpandData();
-        GLES20.glUniform1f(mGLaaCoef,aaCoef);
-        GLES20.glUniform1f(mGLmixCoef,mixCoef);
-        GLES20.glUniform1i(mGLiternum,iternum);
-    }
 }
 

@@ -1,6 +1,7 @@
 package com.wuwang.aavt.examples;
 
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,7 +15,10 @@ import android.widget.TextView;
 import com.wuwang.aavt.av.CameraRecorder2;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.BeautyFilter;
+import com.wuwang.aavt.gl.BlackMagicFilter;
 import com.wuwang.aavt.gl.GrayFilter;
+import com.wuwang.aavt.gl.GroupFilter;
+import com.wuwang.aavt.gl.WaterMarkFilter;
 
 public class CameraRecorderActivity extends AppCompatActivity{
 
@@ -22,7 +26,6 @@ public class CameraRecorderActivity extends AppCompatActivity{
     private TextView mTvPreview,mTvRecord;
     private boolean isPreviewOpen=false;
     private boolean isRecordOpen=false;
-    private BaseFilter mFilter;
     private int mCameraWidth,mCameraHeight;
 
     private CameraRecorder2 mCamera;
@@ -37,12 +40,12 @@ public class CameraRecorderActivity extends AppCompatActivity{
         mTvRecord= (TextView) findViewById(R.id.mTvRec);
         mTvPreview= (TextView) findViewById(R.id.mTvShow);
 
+        GroupFilter filter=new GroupFilter(getResources());
         mCamera =new CameraRecorder2();
-        mCamera.setRenderer(new BeautyFilter(getResources()).setBeautyLevel(4));
+        mCamera.setRenderer(filter);
+        filter.addFilter(new BeautyFilter(getResources()).setBeautyLevel(4));
+        filter.addFilter(new WaterMarkFilter().setMarkPosition(30,10,100,76).setMark(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher)));
         mCamera.setOutputPath(tempPath);
-
-        mFilter=new BeautyFilter(getResources()).setBeautyLevel(5);
-
 
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
