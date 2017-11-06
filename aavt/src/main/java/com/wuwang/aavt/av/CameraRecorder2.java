@@ -32,7 +32,6 @@ import com.wuwang.aavt.media.hard.Mp4MuxStore;
  */
 public class CameraRecorder2 {
 
-
     private VideoSurfaceProcessor mTextureProcessor;
     private ITextureProvider mCameraProvider;
     private SurfaceShower mShower;
@@ -105,6 +104,7 @@ public class CameraRecorder2 {
      */
     public void close(){
         mTextureProcessor.stop();
+        stopRecord();
     }
 
     /**
@@ -133,8 +133,8 @@ public class CameraRecorder2 {
      * 关闭录制
      */
     public void stopRecord(){
-        mSurfaceStore.close();
         mSoundRecord.stop();
+        mSurfaceStore.close();
         try {
             mMuxer.close();
         } catch (AvException e) {

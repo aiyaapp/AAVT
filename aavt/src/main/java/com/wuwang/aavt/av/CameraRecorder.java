@@ -19,10 +19,13 @@ import android.view.Surface;
 
 import com.wuwang.aavt.Aavt;
 import com.wuwang.aavt.core.Renderer;
+import com.wuwang.aavt.egl.EGLConfigAttrs;
+import com.wuwang.aavt.egl.EGLContextAttrs;
+import com.wuwang.aavt.egl.EglHelper;
 import com.wuwang.aavt.gl.BaseFilter;
-import com.wuwang.aavt.gl.EGLHelper;
 import com.wuwang.aavt.gl.FrameBuffer;
 import com.wuwang.aavt.gl.LazyFilter;
+import com.wuwang.aavt.utils.GpuUtils;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.io.File;
@@ -49,7 +52,7 @@ public class CameraRecorder {
     private SurfaceTexture mInputTexture;
     private Surface mOutputSurface;
     private Surface mEncodeSurface;
-    private EGLHelper mShowEGLHelper;
+    private EglHelper mShowEGLHelper;
     private Configuration mConfig;
     private String mOutputPath;
 
@@ -84,7 +87,7 @@ public class CameraRecorder {
     private final static long BASE_TIME=System.currentTimeMillis();
 
     public CameraRecorder(){
-        mShowEGLHelper=new EGLHelper();
+        mShowEGLHelper=new EglHelper();
 //        mEncodeEGLHelper=new EGLHelper();
         mSem=new Semaphore(0);
         mAudioEncodeBufferInfo=new MediaCodec.BufferInfo();
@@ -108,7 +111,7 @@ public class CameraRecorder {
     }
 
     public SurfaceTexture createInputSurfaceTexture(){
-        mInputTextureId=mShowEGLHelper.createTextureID();
+        mInputTextureId= GpuUtils.createTextureID(true);
         mInputTexture=new SurfaceTexture(mInputTextureId);
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -249,8 +252,7 @@ public class CameraRecorder {
                 Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : Preview Size==0");
                 return;
             }
-            mShowEGLHelper.setSurface(mOutputSurface);
-            boolean ret=mShowEGLHelper.createGLES(mPreviewWidth,mPreviewHeight);
+            boolean ret=mShowEGLHelper.createGLESWithSurface(new EGLConfigAttrs(),new EGLContextAttrs(),mOutputSurface);
             if(!ret){
                 Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : createGLES failed");
                 return;
@@ -292,7 +294,7 @@ public class CameraRecorder {
                     synchronized (VIDEO_LOCK){
                         if(isRecordVideoStarted){
                             if(mEGLEncodeSurface==null){
-                                mEGLEncodeSurface=mShowEGLHelper.createEGLWindowSurface(mEncodeSurface);
+                                mEGLEncodeSurface=mShowEGLHelper.createWindowSurface(mEncodeSurface);
                             }
                             mShowEGLHelper.makeCurrent(mEGLEncodeSurface);
                             mEncodeFrameBuffer.bindFrameBuffer(mPreviewWidth,mPreviewHeight);
@@ -308,17 +310,17 @@ public class CameraRecorder {
                             mShowEGLHelper.makeCurrent();
                             GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
                             mShowFilter.draw(mEncodeFrameBuffer.getCacheTextureId());
-                            mShowEGLHelper.setPresentationTime(0);
-                            mShowEGLHelper.swapBuffers();
+                            mShowEGLHelper.setPresentationTime(mShowEGLHelper.getDefaultSurface(),0);
+                            mShowEGLHelper.swapBuffers(mShowEGLHelper.getDefaultSurface());
                         }else{
                             GLES20.glViewport(0,0,mPreviewWidth,mPreviewHeight);
                             mRenderer.draw(mInputTextureId);
-                            mShowEGLHelper.swapBuffers();
+                            mShowEGLHelper.swapBuffers(mShowEGLHelper.getDefaultSurface());
                         }
                     }
                 }
             }
-            mShowEGLHelper.destroyGLES();
+            mShowEGLHelper.destroyGLES(mShowEGLHelper.getDefaultSurface(),mShowEGLHelper.getDefaultContext());
         }
     };
 

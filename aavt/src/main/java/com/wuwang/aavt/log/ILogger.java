@@ -11,28 +11,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.wuwang.aavt.media;
-
-import com.wuwang.aavt.egl.EglHelper;
+package com.wuwang.aavt.log;
 
 /**
- * RenderBean
+ * ILoger
  *
  * @author wuwang
- * @version v1.0 2017:10:27 15:02
+ * @version v1.0 2017:11:03 15:54
  */
-public class RenderBean {
+public interface ILogger {
 
-    public EglHelper egl;
-    public int sourceWidth;
-    public int sourceHeight;
-    public int textureId;
-    public boolean endFlag;
+    int DEBUG=1;
+    int INFO=2;
+    int WARN=3;
+    int ERROR=4;
 
-    public long timeStamp;
-    public long textureTime;
-
-    public long threadId;
+    void log(int level,String key,String value);
 
 }
-

@@ -6,11 +6,12 @@
         android:layout_height="match_parent"
         android:id="@+id/mSurfaceView" />
     <ImageView
-        android:layout_width="368dp"
-        android:layout_height="640dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:contentDescription="@string/app_name"
         android:layout_centerInParent="true"
         android:onClick="onClick"
+        android:scaleType="fitStart"
         android:clickable="true"
         android:id="@+id/mImage"
         android:focusable="true" />

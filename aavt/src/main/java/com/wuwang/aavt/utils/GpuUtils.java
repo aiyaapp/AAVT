@@ -1,10 +1,13 @@
 package com.wuwang.aavt.utils;
 
 import android.content.res.Resources;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.util.Log;
 import com.wuwang.aavt.Aavt;
 import java.io.InputStream;
+
+import javax.microedition.khronos.opengles.GL10;
 
 public enum GpuUtils {
     ;
@@ -102,6 +105,25 @@ public enum GpuUtils {
         if(Aavt.debug&&code!=0){
             Log.e(Aavt.debugTag,"glError:"+code+"---"+index);
         }
+    }
+
+    public static int createTextureID(boolean isOes) {
+        int target= GLES20.GL_TEXTURE_2D;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            target = isOes? GLES11Ext.GL_TEXTURE_EXTERNAL_OES: GLES20.GL_TEXTURE_2D;
+        }
+        int[] texture = new int[1];
+        GLES20.glGenTextures(1, texture, 0);
+        GLES20.glBindTexture(target, texture[0]);
+        GLES20.glTexParameterf(target,
+                GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
+        GLES20.glTexParameterf(target,
+                GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+        GLES20.glTexParameteri(target,
+                GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(target,
+                GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
+        return texture[0];
     }
 
 }

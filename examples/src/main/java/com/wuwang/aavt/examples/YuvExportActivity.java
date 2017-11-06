@@ -53,6 +53,8 @@ public class YuvExportActivity extends AppCompatActivity {
     private boolean exportFlag=false;
     private ImageView mImage;
     private Bitmap mBitmap;
+    private int picX=720;
+    private int picY=1280;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -98,13 +100,13 @@ public class YuvExportActivity extends AppCompatActivity {
                     if(mOutputFilter==null){
                         mOutputFilter=new YuvOutputFilter(YuvOutputFilter.EXPORT_TYPE_NV21);
                         mOutputFilter.create();
-                        mOutputFilter.sizeChanged(368,640);
+                        mOutputFilter.sizeChanged(picX,picY);
                         MatrixUtils.getMatrix(mOutputFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,
-                                bean.sourceWidth,bean.sourceHeight,368,640);
+                                bean.sourceWidth,bean.sourceHeight,picX,picY);
                         MatrixUtils.flip(mOutputFilter.getVertexMatrix(),false,true);
-                        tempBuffer=new byte[368*640*3/2];
+                        tempBuffer=new byte[picX*picY*3/2];
                     }
-                    mFb.bindFrameBuffer(368,640);
+                    mFb.bindFrameBuffer(picX,picY);
                     mOutputFilter.draw(bean.textureId);
                     mOutputFilter.getOutput(tempBuffer);
                     runOnUiThread(new Runnable() {
@@ -114,7 +116,7 @@ public class YuvExportActivity extends AppCompatActivity {
                                 mBitmap.recycle();
                                 mBitmap=null;
                             }
-                            mBitmap=rawByteArray2RGBABitmap2(tempBuffer,368,640);
+                            mBitmap=rawByteArray2RGBABitmap2(tempBuffer,picX,picY);
                             mImage.setImageBitmap(mBitmap);
                             mImage.setVisibility(View.VISIBLE);
                         }

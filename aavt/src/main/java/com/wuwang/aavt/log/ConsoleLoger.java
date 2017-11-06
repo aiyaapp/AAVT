@@ -11,28 +11,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.wuwang.aavt.media;
+package com.wuwang.aavt.log;
 
-import com.wuwang.aavt.egl.EglHelper;
+import android.util.Log;
 
 /**
- * RenderBean
+ * ConsoleLoger
  *
  * @author wuwang
- * @version v1.0 2017:10:27 15:02
+ * @version v1.0 2017:11:03 15:57
  */
-public class RenderBean {
+public class ConsoleLoger implements ILogger {
 
-    public EglHelper egl;
-    public int sourceWidth;
-    public int sourceHeight;
-    public int textureId;
-    public boolean endFlag;
-
-    public long timeStamp;
-    public long textureTime;
-
-    public long threadId;
+    @Override
+    public void log(int level, String key, String value) {
+        switch (level){
+            case DEBUG:
+                Log.d(key,value);
+                break;
+            case INFO:
+                Log.i(key,value);
+            case ERROR:
+                Log.e(key,value);
+                break;
+            default:
+                Log.w(key,value);
+                break;
+        }
+    }
 
 }
-

@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wuwang.aavt.egl;
 
 import android.annotation.TargetApi;
@@ -14,11 +27,14 @@ import android.util.Log;
 
 import javax.microedition.khronos.opengles.GL10;
 
-/*
- * Created by Wuwang on 2017/10/18
+/**
+ * EGLHelper
+ *
+ * @author wuwang
+ * @version v1.0 2017:11:01 11:41
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-public class EGLHelper {
+public class EglHelper {
 
     private boolean isDebug=true;
     private EGLDisplay mEGLDisplay;
@@ -26,11 +42,11 @@ public class EGLHelper {
     private EGLContext mEGLContext;
     private EGLSurface mEGLSurface;
 
-    public EGLHelper(int display){
+    public EglHelper(int display){
         changeDisplay(display);
     }
 
-    public EGLHelper(){
+    public EglHelper(){
         this(EGL14.EGL_DEFAULT_DISPLAY);
     }
 
@@ -183,20 +199,7 @@ public class EGLHelper {
     }
 
     //创建视频数据流的OES TEXTURE
-    public static int createTextureID() {
-        int[] texture = new int[1];
-        GLES20.glGenTextures(1, texture, 0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture[0]);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
-        return texture[0];
-    }
+
 
     private void log(String log){
         if(isDebug){

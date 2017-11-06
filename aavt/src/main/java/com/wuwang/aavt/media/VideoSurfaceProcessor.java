@@ -26,8 +26,10 @@ import com.wuwang.aavt.core.Observable;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.egl.EGLConfigAttrs;
 import com.wuwang.aavt.egl.EGLContextAttrs;
-import com.wuwang.aavt.egl.EGLHelper;
+import com.wuwang.aavt.egl.EglHelper;
 import com.wuwang.aavt.gl.FrameBuffer;
+import com.wuwang.aavt.log.AvLog;
+import com.wuwang.aavt.utils.GpuUtils;
 
 /**
  * VideoSurfaceProcessor 视频流图像处理类，以{@link ITextureProvider}作为视频流图像输入。通过设置{@link IObserver}
@@ -38,6 +40,8 @@ import com.wuwang.aavt.gl.FrameBuffer;
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class VideoSurfaceProcessor{
+
+    public String TAG=getClass().getSimpleName();
 
     private boolean mGLThreadFlag=false;
     private Thread mGLThread;
@@ -97,17 +101,17 @@ public class VideoSurfaceProcessor{
     }
 
     private void glRun(){
-        EGLHelper egl=new EGLHelper();
+        EglHelper egl=new EglHelper();
         boolean ret=egl.createGLESWithSurface(new EGLConfigAttrs(),new EGLContextAttrs(),new SurfaceTexture(1));
         if(!ret){
             //todo 错误处理
             return;
         }
-        int mInputSurfaceTextureId = EGLHelper.createTextureID();
+        int mInputSurfaceTextureId = GpuUtils.createTextureID(true);
         SurfaceTexture mInputSurfaceTexture = new SurfaceTexture(mInputSurfaceTextureId);
 
-
         Point size=mProvider.open(mInputSurfaceTexture);
+        AvLog.d(TAG,"Provider Opened . data size (x,y)="+size.x+"/"+size.y);
         if(size.x<=0||size.y<=0){
             //todo 错误处理
             destroyGL(egl);
@@ -142,12 +146,12 @@ public class VideoSurfaceProcessor{
         rb.sourceHeight= mSourceHeight;
         rb.endFlag=false;
         rb.threadId=Thread.currentThread().getId();
-
+        AvLog.d(TAG,"Processor While Loop Entry");
         //要求数据源必须同步填充SurfaceTexture，填充完成前等待
         while (!mProvider.frame()&&mGLThreadFlag){
             mInputSurfaceTexture.updateTexImage();
             mInputSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
-            Log.e("textureprocess","timestamp:"+ mInputSurfaceTexture.getTimestamp());
+            AvLog.d(TAG,"timestamp:"+ mInputSurfaceTexture.getTimestamp());
             sourceFrame.bindFrameBuffer(mSourceWidth, mSourceHeight);
             GLES20.glViewport(0,0, mSourceWidth, mSourceHeight);
             mRenderer.draw(mInputSurfaceTextureId);
@@ -158,17 +162,17 @@ public class VideoSurfaceProcessor{
             rb.textureTime= mInputSurfaceTexture.getTimestamp();
             observable.notify(rb);
         }
-        Log.e("textureprocess","out of gl thread loop");
+        AvLog.d(TAG,"out of gl thread loop");
         synchronized (LOCK){
             rb.endFlag=true;
             observable.notify(rb);
             destroyGL(egl);
             LOCK.notifyAll();
-            Log.e("wuwang","gl thread exit");
+            AvLog.d(TAG,"gl thread exit");
         }
     }
 
-    private void destroyGL(EGLHelper egl){
+    private void destroyGL(EglHelper egl){
         mGLThreadFlag=false;
         EGL14.eglMakeCurrent(egl.getDisplay(), EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
         EGL14.eglDestroyContext(egl.getDisplay(),egl.getDefaultContext());

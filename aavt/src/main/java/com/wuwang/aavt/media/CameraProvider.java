@@ -19,6 +19,8 @@ import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.wuwang.aavt.log.AvLog;
+
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
@@ -33,25 +35,26 @@ public class CameraProvider implements ITextureProvider {
     private Camera mCamera;
     private int cameraId=1;
     private Semaphore mFrameSem;
+    private String TAG=getClass().getSimpleName();
+    private final Object LOCK=new Object();
 
     @Override
     public Point open(final SurfaceTexture surface) {
-        mFrameSem=new Semaphore(0);
-        mCamera=Camera.open(cameraId);
+        final Point size=new Point();
         try {
+            mFrameSem=new Semaphore(0);
+            mCamera=Camera.open(cameraId);
             mCamera.setPreviewTexture(surface);
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    surface.setOnFrameAvailableListener(frameListener);
-                }
-            });
+            surface.setOnFrameAvailableListener(frameListener);
+            Camera.Size s=mCamera.getParameters().getPreviewSize();
+            mCamera.startPreview();
+            size.x=s.height;
+            size.y=s.width;
+            AvLog.i(TAG,"Camera Opened");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Camera.Size size=mCamera.getParameters().getPreviewSize();
-        mCamera.startPreview();
-        return new Point(size.height,size.width);
+        return size;
     }
 
     @Override
@@ -88,6 +91,7 @@ public class CameraProvider implements ITextureProvider {
 
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+            AvLog.d(TAG,"onFrameAvailable");
             mFrameSem.drainPermits();
             mFrameSem.release();
         }

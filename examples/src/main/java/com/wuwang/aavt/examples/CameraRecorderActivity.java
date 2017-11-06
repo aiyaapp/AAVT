@@ -54,6 +54,7 @@ public class CameraRecorderActivity extends AppCompatActivity{
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 mCamera.open();
                 mCamera.setSurface(holder.getSurface());
+                mCamera.setPreviewSize(width, height);
                 mCamera.startPreview();
                 isPreviewOpen=true;
             }

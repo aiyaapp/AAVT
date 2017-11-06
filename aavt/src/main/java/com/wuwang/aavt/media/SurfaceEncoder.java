@@ -21,6 +21,7 @@ import android.opengl.EGLSurface;
 import android.os.Build;
 import android.util.Log;
 
+import com.wuwang.aavt.log.AvLog;
 import com.wuwang.aavt.media.hard.HardMediaData;
 import com.wuwang.aavt.media.hard.IHardStore;
 
@@ -36,6 +37,7 @@ import java.nio.ByteBuffer;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class SurfaceEncoder extends SurfaceShower{
 
+    private final String TAG="SurfaceEncoder";
     private MediaConfig mConfig=new MediaConfig();
     private MediaCodec mVideoEncoder;
     private boolean isEncodeStarted=false;
@@ -51,6 +53,7 @@ public class SurfaceEncoder extends SurfaceShower{
         super.setOnDrawEndListener(new OnDrawEndListener() {
             @Override
             public void onDrawEnd(EGLSurface surface, RenderBean bean) {
+                AvLog.d(TAG,"onDrawEnd start-->");
                 if(bean.timeStamp!=-1){
                     bean.egl.setPresentationTime(surface,bean.timeStamp*1000);
                 }else{
@@ -60,6 +63,7 @@ public class SurfaceEncoder extends SurfaceShower{
                     bean.egl.setPresentationTime(surface,bean.textureTime-startTime);
                 }
                 videoEncodeStep(false);
+                AvLog.e(TAG,"onDrawEnd end-->");
                 if(mListener!=null){
                     mListener.onDrawEnd(surface,bean);
                 }
@@ -100,6 +104,7 @@ public class SurfaceEncoder extends SurfaceShower{
     }
 
     private void openVideoEncoder(){
+        AvLog.d(TAG,"openVideoEncoder startTime-->");
         if(mVideoEncoder==null){
             try {
                 MediaFormat format=convertVideoConfigToFormat(mConfig.mVideo);
@@ -113,10 +118,11 @@ public class SurfaceEncoder extends SurfaceShower{
                 e.printStackTrace();
             }
         }
+        AvLog.d(TAG,"openVideoEncoder endTime-->");
     }
 
     private void closeVideoEncoder(){
-        Log.e("wuwang","closeEncoder");
+        AvLog.d(TAG,"closeEncoder");
         if(mVideoEncoder!=null){
             mVideoEncoder.stop();
             mVideoEncoder.release();
@@ -124,8 +130,10 @@ public class SurfaceEncoder extends SurfaceShower{
         }
     }
 
+
+
     private synchronized boolean videoEncodeStep(boolean isEnd){
-        Log.i("wuwang","videoEncodeStep:"+isEncodeStarted+"/"+isEnd);
+        AvLog.d(TAG,"videoEncodeStep:"+isEncodeStarted+"/"+isEnd);
         if(isEncodeStarted){
             if(isEnd){
                 mVideoEncoder.signalEndOfInputStream();
@@ -133,17 +141,20 @@ public class SurfaceEncoder extends SurfaceShower{
             MediaCodec.BufferInfo info=new MediaCodec.BufferInfo();
             while (true){
                 int mOutputIndex=mVideoEncoder.dequeueOutputBuffer(info,TIME_OUT);
-                Log.e("wuwang","videoEncodeStep:mOutputIndex="+mOutputIndex);
+                AvLog.i(TAG,"videoEncodeStep:mOutputIndex="+mOutputIndex);
                 if(mOutputIndex>=0){
+                    if((info.flags&MediaCodec.BUFFER_FLAG_CODEC_CONFIG)!=0){
+                        info.size=0;
+                    }
                     ByteBuffer buffer= CodecUtil.getOutputBuffer(mVideoEncoder,mOutputIndex);
                     if(mStore!=null){
                         mStore.addData(mVideoTrack,new HardMediaData(buffer,info));
                     }
                     mVideoEncoder.releaseOutputBuffer(mOutputIndex,false);
-                    if(info.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
+                    if((info.flags&MediaCodec.BUFFER_FLAG_END_OF_STREAM)!=0){
                         closeVideoEncoder();
                         isEncodeStarted=false;
-                        Log.e("wuwang","videoEncodeStep: MediaCodec.BUFFER_FLAG_END_OF_STREAM ");
+                        AvLog.i(TAG,"videoEncodeStep: MediaCodec.BUFFER_FLAG_END_OF_STREAM ");
                         break;
                     }
                 }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){

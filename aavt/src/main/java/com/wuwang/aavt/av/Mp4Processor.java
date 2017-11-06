@@ -16,8 +16,11 @@ import android.view.Surface;
 
 import com.wuwang.aavt.Aavt;
 import com.wuwang.aavt.core.Renderer;
-import com.wuwang.aavt.gl.EGLHelper;
+import com.wuwang.aavt.egl.EGLConfigAttrs;
+import com.wuwang.aavt.egl.EGLContextAttrs;
+import com.wuwang.aavt.egl.EglHelper;
 import com.wuwang.aavt.gl.OesFilter;
+import com.wuwang.aavt.utils.GpuUtils;
 import com.wuwang.aavt.utils.MatrixUtils;
 
 import java.io.File;
@@ -46,7 +49,7 @@ public class Mp4Processor {
     //private MediaCodec mAudioEncoder;           //音频编码器
     private MediaExtractor mExtractor;          //音视频分离器
     private MediaMuxer mMuxer;                  //音视频混合器
-    private EGLHelper mEGLHelper;               //GL环境创建的帮助类
+    private EglHelper mEGLHelper;               //GL环境创建的帮助类
     private MediaCodec.BufferInfo mVideoDecoderBufferInfo;  //用于存储当前帧的视频解码信息
     //private MediaCodec.BufferInfo mAudioDecoderBufferInfo;  //用于存储当前帧的音频解码信息
     private MediaCodec.BufferInfo mVideoEncoderBufferInfo;  //用于存储当前帧的视频编码信息
@@ -94,7 +97,7 @@ public class Mp4Processor {
     private long mTotalVideoTime=0;     //视频的总时长
 
     public Mp4Processor(){
-        mEGLHelper=new EGLHelper();
+        mEGLHelper=new EglHelper();
         mVideoDecoderBufferInfo=new MediaCodec.BufferInfo();
         //mAudioDecoderBufferInfo=new MediaCodec.BufferInfo();
         mVideoEncoderBufferInfo=new MediaCodec.BufferInfo();
@@ -214,7 +217,7 @@ public class Mp4Processor {
                     Log.e(Aavt.debugTag,"createDecoder");
                     mVideoDecoder= MediaCodec.createDecoderByType(mime);
                     Log.e(Aavt.debugTag,"createDecoder end");
-                    mVideoTextureId=mEGLHelper.createTextureID();
+                    mVideoTextureId= GpuUtils.createTextureID(true);
                     mVideoSurfaceTexture=new SurfaceTexture(mVideoTextureId);
                     mVideoDecoder.configure(format,new Surface(mVideoSurfaceTexture),null,0);
                     if(!isRenderToWindowSurface){
@@ -428,8 +431,7 @@ public class Mp4Processor {
     private void glRunnable(){
         mSem=new Semaphore(0);
         mDecodeSem=new Semaphore(1);
-        mEGLHelper.setSurface(mOutputSurface);
-        boolean ret=mEGLHelper.createGLES(mOutputVideoWidth,mOutputVideoHeight);
+        boolean ret=mEGLHelper.createGLESWithSurface(new EGLConfigAttrs(),new EGLContextAttrs(),mOutputSurface);
         if(!ret){
             return;
         }
@@ -452,12 +454,12 @@ public class Mp4Processor {
                 //todo 带有rotation的视频，还需要处理
                 mVideoSurfaceTexture.getTransformMatrix(mRenderer.getTextureMatrix());
                 mRenderer.draw(mVideoTextureId);
-                mEGLHelper.setPresentationTime(mVideoDecoderBufferInfo.presentationTimeUs*1000);
+                mEGLHelper.setPresentationTime(mEGLHelper.getDefaultSurface(),mVideoDecoderBufferInfo.presentationTimeUs*1000);
                 if(!isRenderToWindowSurface){
                     frameNum++;
                     videoEncodeStep(false);
                 }
-                mEGLHelper.swapBuffers();
+                mEGLHelper.swapBuffers(mEGLHelper.getDefaultSurface());
             }
             if(mProgressListener!=null){
                 mProgressListener.onProgress(getTotalVideoTime()*1000L,mVideoDecoderBufferInfo.presentationTimeUs);
@@ -469,7 +471,7 @@ public class Mp4Processor {
             videoEncodeStep(true);
         }
         mRenderer.destroy();
-        mEGLHelper.destroyGLES();
+        mEGLHelper.destroyGLES(mEGLHelper.getDefaultSurface(),mEGLHelper.getDefaultContext());
     }
 
     public long getPresentationTime(){
