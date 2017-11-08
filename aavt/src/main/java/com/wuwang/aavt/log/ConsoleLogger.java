@@ -16,12 +16,12 @@ package com.wuwang.aavt.log;
 import android.util.Log;
 
 /**
- * ConsoleLoger
+ * ConsoleLogger
  *
  * @author wuwang
  * @version v1.0 2017:11:03 15:57
  */
-public class ConsoleLoger implements ILogger {
+public class ConsoleLogger implements ILogger {
 
     @Override
     public void log(int level, String key, String value) {
@@ -31,6 +31,7 @@ public class ConsoleLoger implements ILogger {
                 break;
             case INFO:
                 Log.i(key,value);
+                break;
             case ERROR:
                 Log.e(key,value);
                 break;

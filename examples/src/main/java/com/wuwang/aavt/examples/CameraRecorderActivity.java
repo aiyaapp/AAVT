@@ -40,11 +40,11 @@ public class CameraRecorderActivity extends AppCompatActivity{
         mTvRecord= (TextView) findViewById(R.id.mTvRec);
         mTvPreview= (TextView) findViewById(R.id.mTvShow);
 
-        GroupFilter filter=new GroupFilter(getResources());
         mCamera =new CameraRecorder2();
-        mCamera.setRenderer(filter);
-        filter.addFilter(new BeautyFilter(getResources()).setBeautyLevel(4));
-        filter.addFilter(new WaterMarkFilter().setMarkPosition(30,10,100,76).setMark(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher)));
+//        GroupFilter filter=new GroupFilter(getResources());
+//        mCamera.setRenderer(filter);
+//        filter.addFilter(new BeautyFilter(getResources()).setBeautyLevel(4));
+//        filter.addFilter(new WaterMarkFilter().setMarkPosition(30,10,100,76).setMark(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher)));
         mCamera.setOutputPath(tempPath);
 
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {

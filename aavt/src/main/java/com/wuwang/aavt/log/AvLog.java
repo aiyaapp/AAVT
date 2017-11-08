@@ -21,7 +21,7 @@ package com.wuwang.aavt.log;
  */
 public class AvLog{
 
-    private static ILogger log=new ConsoleLoger();
+    private static ILogger log=new ConsoleLogger();
 
     private static String tag="AvLog";
 

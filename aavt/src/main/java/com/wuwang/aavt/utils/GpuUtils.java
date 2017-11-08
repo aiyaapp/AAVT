@@ -3,8 +3,8 @@ package com.wuwang.aavt.utils;
 import android.content.res.Resources;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
-import android.util.Log;
-import com.wuwang.aavt.Aavt;
+import com.wuwang.aavt.log.AvLog;
+
 import java.io.InputStream;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -102,9 +102,7 @@ public enum GpuUtils {
     }
 
     private static void glError(int code,Object index){
-        if(Aavt.debug&&code!=0){
-            Log.e(Aavt.debugTag,"glError:"+code+"---"+index);
-        }
+        AvLog.e("glError:"+code+"---"+index);
     }
 
     public static int createTextureID(boolean isOes) {

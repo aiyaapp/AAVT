@@ -23,6 +23,7 @@ import com.wuwang.aavt.media.VideoSurfaceProcessor;
 import com.wuwang.aavt.media.av.AvException;
 import com.wuwang.aavt.media.hard.IHardStore;
 import com.wuwang.aavt.media.hard.Mp4MuxStore;
+import com.wuwang.aavt.media.hard.StrengthenMp4MuxStore;
 
 /**
  * CameraRecorder2 相机预览及录制工具类
@@ -42,7 +43,7 @@ public class CameraRecorder2 {
 
     public CameraRecorder2(){
         //用于视频混流和存储
-        mMuxer=new Mp4MuxStore(true);
+        mMuxer=new StrengthenMp4MuxStore(true);
 
         //用于预览图像
         mShower=new SurfaceShower();

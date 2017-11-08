@@ -11,7 +11,7 @@ import android.os.Build;
 import android.util.Log;
 import android.view.Surface;
 
-import com.wuwang.aavt.Aavt;
+import com.wuwang.aavt.log.AvLog;
 import com.wuwang.aavt.media.av.AvException;
 import com.wuwang.aavt.media.hard.HardMediaData;
 import com.wuwang.aavt.media.hard.IHardStore;
@@ -197,15 +197,15 @@ public class Mp4Provider implements ITextureProvider {
                     info.flags=isAudioEnd?MediaCodec.BUFFER_FLAG_END_OF_STREAM:flags;
                     info.presentationTimeUs=mExtractor.getSampleTime();
                     info.offset=0;
-                    Log.e(Aavt.debugTag,"audio sampleTime= "+info.presentationTimeUs+"/"+mVideoStopTimeStamp);
+                    AvLog.d("audio sampleTime= "+info.presentationTimeUs+"/"+mVideoStopTimeStamp);
                     isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
-                    Log.e(Aavt.debugTag,"is End= "+isAudioEnd );
+                    AvLog.d("is End= "+isAudioEnd );
                     mStore.addData(mAudioEncodeTrack,new HardMediaData(buffer,info));
                     if(isAudioEnd){
                         break;
                     }
                 }else{
-                    Log.e(Aavt.debugTag,"is End= "+true );
+                    AvLog.d("is End= "+true );
                     info.size=0;
                     info.flags=MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     mStore.addData(mAudioEncodeTrack,new HardMediaData(buffer,info));

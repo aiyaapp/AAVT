@@ -8,22 +8,17 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
-import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Surface;
 
-import com.wuwang.aavt.Aavt;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.egl.EGLConfigAttrs;
 import com.wuwang.aavt.egl.EGLContextAttrs;
 import com.wuwang.aavt.egl.EglHelper;
-import com.wuwang.aavt.gl.OesFilter;
+import com.wuwang.aavt.log.AvLog;
 import com.wuwang.aavt.utils.GpuUtils;
-import com.wuwang.aavt.utils.MatrixUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
@@ -173,7 +168,7 @@ public class Mp4Processor {
             for (int i=0;i<count;i++){
                 MediaFormat format=mExtractor.getTrackFormat(i);
                 String mime=format.getString(MediaFormat.KEY_MIME);
-                Log.d(Aavt.debugTag,"extractor format-->"+mExtractor.getTrackFormat(i));
+                AvLog.d("extractor format-->"+mExtractor.getTrackFormat(i));
                 if(mime.startsWith("audio")){
                     mAudioDecoderTrack=i;
                     //todo 暂时不对音频处理，后续需要对音频处理时再修改这个
@@ -214,9 +209,9 @@ public class Mp4Processor {
                         mInputVideoWidth=format.getInteger(MediaFormat.KEY_WIDTH);
                         mInputVideoHeight=format.getInteger(MediaFormat.KEY_HEIGHT);
                     }
-                    Log.e(Aavt.debugTag,"createDecoder");
+                    AvLog.d("createDecoder");
                     mVideoDecoder= MediaCodec.createDecoderByType(mime);
-                    Log.e(Aavt.debugTag,"createDecoder end");
+                    AvLog.d("createDecoder end");
                     mVideoTextureId= GpuUtils.createTextureID(true);
                     mVideoSurfaceTexture=new SurfaceTexture(mVideoTextureId);
                     mVideoDecoder.configure(format,new Surface(mVideoSurfaceTexture),null,0);
@@ -245,11 +240,11 @@ public class Mp4Processor {
                 //如果用户没有设置渲染到指定Surface，就需要导出视频，暂时不对音频做处理
                 mMuxer=new MediaMuxer(mOutputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 //                mMuxer.setOrientationHint(videoRotation);
-                Log.d(Aavt.debugTag,"video rotation:"+videoRotation);
+                AvLog.d("video rotation:"+videoRotation);
                 //如果mp4中有音轨
                 if(mAudioDecoderTrack>=0){
                     MediaFormat format=mExtractor.getTrackFormat(mAudioDecoderTrack);
-                    Log.d(Aavt.debugTag,"audio track-->"+format.toString());
+                    AvLog.d("audio track-->"+format.toString());
 
                     mAudioEncoderTrack=mMuxer.addTrack(format);
                 }
@@ -262,7 +257,7 @@ public class Mp4Processor {
         synchronized (PROCESS_LOCK){
             if(!isStarted){
                 if(!prepare()){
-                    Log.e(Aavt.debugTag,"prepare failed");
+                    AvLog.d("prepare failed");
                     return false;
                 }
 
@@ -292,10 +287,10 @@ public class Mp4Processor {
                     public void run() {
                         //视频处理
                         if(mVideoDecoderTrack>=0){
-                            Log.d(Aavt.debugTag,"videoDecodeStep start");
+                            AvLog.d("videoDecodeStep start");
                             codecNum=0;
                             while (mCodecFlag&&!videoDecodeStep()){};
-                            Log.d(Aavt.debugTag,"videoDecodeStep end--FrameNum="+codecNum);
+                            AvLog.d("videoDecodeStep end--FrameNum="+codecNum);
                             mGLThreadFlag=false;
                             try {
                                 mSem.release();
@@ -311,7 +306,7 @@ public class Mp4Processor {
                             buffer.clear();
                         }
 
-                        Log.d(Aavt.debugTag,"codec thread_finish");
+                        AvLog.d("codec thread_finish");
                         mCodecFlag=false;
                         avStop();
                         //todo 判断是用户取消了的情况
@@ -348,7 +343,7 @@ public class Mp4Processor {
                 mAudioEncoderBufferInfo.flags=flags;
                 mAudioEncoderBufferInfo.presentationTimeUs=mExtractor.getSampleTime();
                 mAudioEncoderBufferInfo.offset=0;
-                Log.e(Aavt.debugTag,"audio sampleTime="+mAudioEncoderBufferInfo.presentationTimeUs);
+                AvLog.d("audio sampleTime="+mAudioEncoderBufferInfo.presentationTimeUs);
                 isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
                 mMuxer.writeSampleData(mAudioEncoderTrack,buffer,mAudioEncoderBufferInfo);
             }
@@ -369,7 +364,7 @@ public class Mp4Processor {
                 int ret = mExtractor.readSampleData(buffer, 0);
                 if (ret != -1) {
                     mVideoStopTimeStamp=mExtractor.getSampleTime();
-                    Log.d(Aavt.debugTag,"mVideoStopTimeStamp:"+mVideoStopTimeStamp);
+                    AvLog.d("mVideoStopTimeStamp:"+mVideoStopTimeStamp);
                     mVideoDecoder.queueInputBuffer(mInputIndex, 0, ret, mVideoStopTimeStamp, mExtractor.getSampleFlags());
                 }
                 isVideoExtractorEnd = !mExtractor.advance();
@@ -379,11 +374,11 @@ public class Mp4Processor {
             int mOutputIndex=mVideoDecoder.dequeueOutputBuffer(mVideoDecoderBufferInfo,TIME_OUT);
             if(mOutputIndex>=0){
                 try {
-                    Log.d(Aavt.debugTag," mDecodeSem.acquire ");
+                    AvLog.d(" mDecodeSem.acquire ");
                     if(!isUserWantToStop){
                         mDecodeSem.acquire();
                     }
-                    Log.d(Aavt.debugTag," mDecodeSem.acquire end ");
+                    AvLog.d(" mDecodeSem.acquire end ");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -406,7 +401,7 @@ public class Mp4Processor {
         }
         while (true){
             int mOutputIndex=mVideoEncoder.dequeueOutputBuffer(mVideoEncoderBufferInfo,TIME_OUT);
-            Log.d(Aavt.debugTag,"videoEncodeStep-------------------mOutputIndex="+mOutputIndex+"/"+mVideoEncoderBufferInfo.presentationTimeUs);
+            AvLog.d("videoEncodeStep-------------------mOutputIndex="+mOutputIndex+"/"+mVideoEncoderBufferInfo.presentationTimeUs);
             if(mOutputIndex>=0){
                 ByteBuffer buffer=getOutputBuffer(mVideoEncoder,mOutputIndex);
                 if(mVideoEncoderBufferInfo.size>0){
@@ -415,7 +410,7 @@ public class Mp4Processor {
                 mVideoEncoder.releaseOutputBuffer(mOutputIndex,false);
             }else if(mOutputIndex== MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 MediaFormat format=mVideoEncoder.getOutputFormat();
-                Log.d(Aavt.debugTag,"video format -->"+format.toString());
+                AvLog.d("video format -->"+format.toString());
                 mVideoEncoderTrack=mMuxer.addTrack(format);
                 mMuxer.start();
                 synchronized (MUX_LOCK){
@@ -443,9 +438,9 @@ public class Mp4Processor {
         int frameNum=0;
         while (mGLThreadFlag){
             try {
-                Log.d(Aavt.debugTag," mSem.acquire ");
+                AvLog.d(" mSem.acquire ");
                 mSem.acquire();
-                Log.d(Aavt.debugTag," mSem.acquire end");
+                AvLog.d(" mSem.acquire end");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -466,7 +461,7 @@ public class Mp4Processor {
             }
             mDecodeSem.release();
         }
-        Log.e(Aavt.debugTag,"Encode Frame num-----:"+frameNum);
+        AvLog.d("Encode Frame num-----:"+frameNum);
         if(!isRenderToWindowSurface){
             videoEncodeStep(true);
         }
@@ -529,9 +524,9 @@ public class Mp4Processor {
                     mDecodeSem.release();
                     isUserWantToStop=true;
                     if(mDecodeThread!=null&&mDecodeThread.isAlive()){
-                        Log.d(Aavt.debugTag,"try to stop decode thread");
+                        AvLog.d("try to stop decode thread");
                         mDecodeThread.join();
-                        Log.d(Aavt.debugTag,"decode thread stoped");
+                        AvLog.d("decode thread stoped");
                     }
                     isUserWantToStop=false;
                 }

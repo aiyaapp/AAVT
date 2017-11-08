@@ -183,8 +183,12 @@ public class EglHelper {
 
     public boolean destroyGLES(EGLSurface surface,EGLContext context){
         EGL14.eglMakeCurrent(mEGLDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
-        EGL14.eglDestroySurface(mEGLDisplay,surface);
-        EGL14.eglDestroyContext(mEGLDisplay,context);
+        if(surface!=null){
+            EGL14.eglDestroySurface(mEGLDisplay,surface);
+        }
+        if(context!=null){
+            EGL14.eglDestroyContext(mEGLDisplay,context);
+        }
         EGL14.eglTerminate(mEGLDisplay);
         log("gl destroy gles");
         return true;

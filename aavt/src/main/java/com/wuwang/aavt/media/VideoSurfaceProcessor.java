@@ -41,7 +41,7 @@ import com.wuwang.aavt.utils.GpuUtils;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class VideoSurfaceProcessor{
 
-    public String TAG=getClass().getSimpleName();
+    private String TAG=getClass().getSimpleName();
 
     private boolean mGLThreadFlag=false;
     private Thread mGLThread;

@@ -14,10 +14,8 @@ import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.Surface;
 
-import com.wuwang.aavt.Aavt;
 import com.wuwang.aavt.core.Renderer;
 import com.wuwang.aavt.egl.EGLConfigAttrs;
 import com.wuwang.aavt.egl.EGLContextAttrs;
@@ -25,6 +23,7 @@ import com.wuwang.aavt.egl.EglHelper;
 import com.wuwang.aavt.gl.BaseFilter;
 import com.wuwang.aavt.gl.FrameBuffer;
 import com.wuwang.aavt.gl.LazyFilter;
+import com.wuwang.aavt.log.AvLog;
 import com.wuwang.aavt.utils.GpuUtils;
 import com.wuwang.aavt.utils.MatrixUtils;
 
@@ -141,7 +140,7 @@ public class CameraRecorder {
 
     public void startPreview(){
         synchronized (REC_LOCK){
-            Log.d(Aavt.debugTag,"CameraRecorder startPreview");
+            AvLog.d("CameraRecorder startPreview");
             mSem.drainPermits();
             mGLThreadFlag=true;
             mGLThread=new Thread(mGLRunnable);
@@ -157,7 +156,7 @@ public class CameraRecorder {
                 mGLThread.join();
                 mGLThread=null;
             }
-            Log.d(Aavt.debugTag,"CameraRecorder stopPreview");
+            AvLog.d("CameraRecorder stopPreview");
         }
     }
 
@@ -224,7 +223,7 @@ public class CameraRecorder {
                     e.printStackTrace();
                     File file=new File(mOutputPath);
                     if(file.exists()&&file.delete()){
-                        Log.d(Aavt.debugTag,"delete error file :"+mOutputPath);
+                        AvLog.d("delete error file :"+mOutputPath);
                     }
                 }
 
@@ -245,16 +244,16 @@ public class CameraRecorder {
         @Override
         public void run() {
             if(mOutputSurface==null){
-                Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : outputSurface==null");
+                AvLog.d("CameraRecorder GLThread exit : outputSurface==null");
                 return;
             }
             if(mPreviewWidth<=0||mPreviewHeight<=0){
-                Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : Preview Size==0");
+                AvLog.d("CameraRecorder GLThread exit : Preview Size==0");
                 return;
             }
             boolean ret=mShowEGLHelper.createGLESWithSurface(new EGLConfigAttrs(),new EGLContextAttrs(),mOutputSurface);
             if(!ret){
-                Log.e(Aavt.debugTag,"CameraRecorder GLThread exit : createGLES failed");
+                AvLog.d("CameraRecorder GLThread exit : createGLES failed");
                 return;
             }
             if(mRenderer==null){
@@ -336,13 +335,13 @@ public class CameraRecorder {
                 }
                 mVideoEncoder.releaseOutputBuffer(outputIndex,false);
                 if(mVideoEncodeBufferInfo.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
-                    Log.d(Aavt.debugTag,"CameraRecorder get video encode end of stream");
+                    AvLog.d("CameraRecorder get video encode end of stream");
                     return true;
                 }
             }else if(outputIndex==MediaCodec.INFO_TRY_AGAIN_LATER){
                 break;
             }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                Log.e(Aavt.debugTag,"get video output format changed ->"+mVideoEncoder.getOutputFormat().toString());
+                AvLog.d("get video output format changed ->"+mVideoEncoder.getOutputFormat().toString());
                 mVideoTrack=mMuxer.addTrack(mVideoEncoder.getOutputFormat());
                 mMuxer.start();
                 isMuxStarted=true;
@@ -373,7 +372,7 @@ public class CameraRecorder {
                     }
                     mAudioEncoder.releaseOutputBuffer(outputIndex,false);
                     if(mAudioEncodeBufferInfo.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
-                        Log.d(Aavt.debugTag,"CameraRecorder get audio encode end of stream");
+                        AvLog.d("CameraRecorder get audio encode end of stream");
                         isTryStopAudio=false;
                         isRecordAudioStarted=false;
                         return true;
@@ -381,7 +380,7 @@ public class CameraRecorder {
                 }else if(outputIndex==MediaCodec.INFO_TRY_AGAIN_LATER){
                     break;
                 }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                    Log.e(Aavt.debugTag,"get audio output format changed ->"+mAudioEncoder.getOutputFormat().toString());
+                    AvLog.d("get audio output format changed ->"+mAudioEncoder.getOutputFormat().toString());
                     synchronized (VIDEO_LOCK){
                         mAudioTrack=mMuxer.addTrack(mAudioEncoder.getOutputFormat());
                         isRecordVideoStarted=true;

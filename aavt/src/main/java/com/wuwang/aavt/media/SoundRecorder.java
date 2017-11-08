@@ -11,7 +11,7 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
-import com.wuwang.aavt.Aavt;
+import com.wuwang.aavt.log.AvLog;
 import com.wuwang.aavt.media.hard.HardMediaData;
 import com.wuwang.aavt.media.hard.IHardStore;
 
@@ -39,14 +39,19 @@ public class SoundRecorder {
     private int mAudioTrack=-1;
     private long startTime=0;
     private boolean stopFlag=false;
+    private Executors mExec;
 
     public SoundRecorder(IHardStore store){
         this.mStore=store;
     }
 
+    public void configure(){
+    }
+
     public void start(){
         if(!isStarted){
             stopFlag=false;
+
             mRecordBufferSize = AudioRecord.getMinBufferSize(mRecordSampleRate,
                     mRecordChannelConfig, mRecordAudioFormat)*2;
             mRecord=new AudioRecord(MediaRecorder.AudioSource.MIC,mRecordSampleRate,mRecordChannelConfig,
@@ -87,7 +92,7 @@ public class SoundRecorder {
 
     private synchronized boolean audioEncodeStep(boolean isEnd){
         if(isStarted){
-            Log.d(Aavt.debugTag,"audioEncodeStep");
+            AvLog.d("audioEncodeStep");
             int inputIndex=mAudioEncoder.dequeueInputBuffer(TIME_OUT);
             if(inputIndex>=0){
                 ByteBuffer buffer= CodecUtil.getInputBuffer(mAudioEncoder,inputIndex);
@@ -108,14 +113,14 @@ public class SoundRecorder {
                     }
                     mAudioEncoder.releaseOutputBuffer(outputIndex,false);
                     if(info.flags==MediaCodec.BUFFER_FLAG_END_OF_STREAM){
-                        Log.d(Aavt.debugTag,"CameraRecorder get audio encode end of stream");
+                        AvLog.d("CameraRecorder get audio encode end of stream");
                         stop();
                         return true;
                     }
                 }else if(outputIndex==MediaCodec.INFO_TRY_AGAIN_LATER){
                     break;
                 }else if(outputIndex==MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                    Log.e(Aavt.debugTag,"get audio output format changed ->"+mAudioEncoder.getOutputFormat().toString());
+                    AvLog.d("get audio output format changed ->"+mAudioEncoder.getOutputFormat().toString());
                     mAudioTrack=mStore.addTrack(mAudioEncoder.getOutputFormat());
                 }
             }
