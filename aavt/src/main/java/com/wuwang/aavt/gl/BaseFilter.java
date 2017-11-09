@@ -191,13 +191,7 @@ public abstract class BaseFilter implements Renderer {
      */
     public int drawToTexture(int texture){
         mFrameTemp.bindFrameBuffer(mWidth,mHeight);
-        onClear();
-        onUseProgram();
-        MatrixUtils.flip(mVertexMatrix,false,true);
-        onSetExpandData();
-        MatrixUtils.flip(mVertexMatrix,false,true);
-        onBindTexture(texture);
-        onDraw();
+        draw(texture);
         mFrameTemp.unBindFrameBuffer();
         return mFrameTemp.getCacheTextureId();
     }
