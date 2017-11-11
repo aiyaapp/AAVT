@@ -80,6 +80,7 @@ public class SurfaceShower implements IObserver<RenderBean> {
                 mFilter.sizeChanged(rb.sourceWidth, rb.sourceHeight);
                 MatrixUtils.getMatrix(mFilter.getVertexMatrix(),mMatrixType,rb.sourceWidth,rb.sourceHeight,
                         mWidth,mHeight);
+                MatrixUtils.flip(mFilter.getVertexMatrix(),false,true);
             }
             rb.egl.makeCurrent(mShowSurface);
             GLES20.glViewport(0,0,mWidth,mHeight);

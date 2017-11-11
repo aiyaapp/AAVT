@@ -16,17 +16,16 @@ package com.wuwang.aavt.gl;
 import android.content.res.Resources;
 import android.opengl.GLES20;
 
-import com.wuwang.aavt.utils.MatrixUtils;
-
 import java.nio.ByteBuffer;
 
 /**
- * YuvOutputFilter GPU转换rgba纹理为YUV的滤镜
+ * YuvOutputFilter
  *
  * @author wuwang
- * @version v1.0 2017:10:31 11:55
+ * @version v1.0 2017:11:10 12:18
  */
-public class YuvOutputFilter extends LazyFilter {
+public class YuvOutputFilter extends BaseFilter {
+
 
     private ByteBuffer mTempBuffer;
 
@@ -38,49 +37,41 @@ public class YuvOutputFilter extends LazyFilter {
     public static final int EXPORT_TYPE_NV21=4;
 
     private BaseFilter mExportFilter;
-    private FrameBuffer mFrameBuffer;
 
     public YuvOutputFilter(int type) {
-        super();
-        mExportFilter=new ExportFilter(type);
-        mFrameBuffer=new FrameBuffer();
-        MatrixUtils.flip(mExportFilter.getVertexMatrix(),false,true);
+        super(null,"None","None");
+        mExportFilter=new YuvOutputFilter.ExportFilter(type);
     }
 
     public YuvOutputFilter(Resources res, String yuvShader){
-        super();
-        mExportFilter=new ExportFilter(res,yuvShader);
-        mFrameBuffer=new FrameBuffer();
+        super(null,"None","None");
+        mExportFilter=new YuvOutputFilter.ExportFilter(res,yuvShader);
+    }
+
+    @Override
+    public float[] getTextureMatrix() {
+        return mExportFilter.getTextureMatrix();
     }
 
     @Override
     protected void onCreate() {
-        super.onCreate();
         mExportFilter.create();
     }
 
     @Override
     protected void onSizeChanged(int width, int height) {
-        super.onSizeChanged(width, height);
         mExportFilter.sizeChanged(width, height);
+        mTempBuffer=ByteBuffer.allocate(mWidth*mHeight*3/2);
     }
 
     @Override
-    protected void onDraw() {
-        //fix wrong color when blend
+    public void draw(int texture) {
         boolean isBlend= GLES20.glIsEnabled(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_BLEND);
-
         GLES20.glGetIntegerv(GLES20.GL_VIEWPORT,lastViewPort,0);
         GLES20.glViewport(0,0,mWidth,mHeight);
-        mFrameBuffer.bindFrameBuffer(mWidth,mHeight);
-        super.onDraw();
-        if(mTempBuffer==null){
-            mTempBuffer=ByteBuffer.allocate(mWidth*mHeight*3/2);
-        }
-        mFrameBuffer.unBindFrameBuffer();
         GLES20.glViewport(0,0,mWidth,mHeight);
-        mExportFilter.draw(mFrameBuffer.getCacheTextureId());
+        mExportFilter.draw(texture);
         GLES20.glReadPixels(0,0,mWidth,mHeight*3/8,GLES20.GL_RGBA,GLES20.GL_UNSIGNED_BYTE,mTempBuffer);
         GLES20.glViewport(lastViewPort[0],lastViewPort[1],lastViewPort[2],lastViewPort[3]);
         if(isBlend){
@@ -88,17 +79,16 @@ public class YuvOutputFilter extends LazyFilter {
         }
     }
 
-    public void getOutput(byte[] data){
+    public void getOutput(byte[] data,int offset,int length){
         if(mTempBuffer!=null){
-            mTempBuffer.get(data);
+            mTempBuffer.get(data,offset,length);
             mTempBuffer.clear();
         }
     }
 
     @Override
     public void destroy() {
-        super.destroy();
-        mFrameBuffer.destroyFrameBuffer();
+        mExportFilter.destroy();
     }
 
     private static class ExportShader{
@@ -248,7 +238,7 @@ public class YuvOutputFilter extends LazyFilter {
         }
     }
 
-    private static class ExportFilter extends BaseFilter{
+    private static class ExportFilter extends BaseFilter {
 
         private int mGLWidth;
         private int mGLHeight;
@@ -276,5 +266,5 @@ public class YuvOutputFilter extends LazyFilter {
         }
     }
 
-}
 
+}

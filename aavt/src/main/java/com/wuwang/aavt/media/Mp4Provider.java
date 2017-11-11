@@ -27,6 +27,7 @@ import java.util.concurrent.Semaphore;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class Mp4Provider implements ITextureProvider {
 
+    private final String tag=getClass().getSimpleName();
     private String mPath;
     private MediaExtractor mExtractor;
     private MediaCodec mVideoDecoder;
@@ -153,13 +154,13 @@ public class Mp4Provider implements ITextureProvider {
             public void run() {
                 while (!videoDecodeStep()){}
                 if(videoDecodeBufferInfo.flags!=MediaCodec.BUFFER_FLAG_END_OF_STREAM){
-                    Log.e("wuwang","video ------------------ end");
+                    AvLog.d(tag,"video ------------------ end");
                     videoProvideEndFlag=true;
-                    try {
-                        mDecodeSem.acquire();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        mDecodeSem.acquire();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     //释放最后一帧的信号
                     videoDecodeBufferInfo.flags=MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     mFrameSem.release();
@@ -167,7 +168,9 @@ public class Mp4Provider implements ITextureProvider {
                 mVideoDecoder.stop();
                 mVideoDecoder.release();
                 mVideoDecoder=null;
+                AvLog.d(tag,"audioStart");
                 audioDecodeStep();
+                AvLog.d(tag,"audioStop");
                 mExtractor.release();
                 mExtractor=null;
                 try {
@@ -197,15 +200,15 @@ public class Mp4Provider implements ITextureProvider {
                     info.flags=isAudioEnd?MediaCodec.BUFFER_FLAG_END_OF_STREAM:flags;
                     info.presentationTimeUs=mExtractor.getSampleTime();
                     info.offset=0;
-                    AvLog.d("audio sampleTime= "+info.presentationTimeUs+"/"+mVideoStopTimeStamp);
-                    isTimeEnd=mExtractor.getSampleTime()>=mVideoStopTimeStamp;
-                    AvLog.d("is End= "+isAudioEnd );
+                    AvLog.d(tag,"audio sampleTime= "+info.presentationTimeUs+"/"+mVideoStopTimeStamp);
+                    isTimeEnd=mExtractor.getSampleTime()>mVideoStopTimeStamp;
+                    AvLog.d(tag,"is End= "+isAudioEnd );
                     mStore.addData(mAudioEncodeTrack,new HardMediaData(buffer,info));
                     if(isAudioEnd){
                         break;
                     }
                 }else{
-                    AvLog.d("is End= "+true );
+                    AvLog.d(tag,"is End= "+true );
                     info.size=0;
                     info.flags=MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     mStore.addData(mAudioEncodeTrack,new HardMediaData(buffer,info));

@@ -29,6 +29,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.wuwang.aavt.gl.FrameBuffer;
+import com.wuwang.aavt.gl.LazyFilter;
 import com.wuwang.aavt.gl.YuvOutputFilter;
 import com.wuwang.aavt.media.CameraProvider;
 import com.wuwang.aavt.media.RenderBean;
@@ -49,6 +50,7 @@ public class YuvExportActivity extends AppCompatActivity {
     private SurfaceShower mShower;
     private FrameBuffer mFb;
     private YuvOutputFilter mOutputFilter;
+    private LazyFilter mCutScene;
     private byte[] tempBuffer;
     private boolean exportFlag=false;
     private ImageView mImage;
@@ -98,17 +100,19 @@ public class YuvExportActivity extends AppCompatActivity {
             public void onDrawEnd(EGLSurface surface, RenderBean bean) {
                 if(exportFlag){
                     if(mOutputFilter==null){
+                        mCutScene=new LazyFilter();
+                        mCutScene.create();
+                        mCutScene.sizeChanged(picX,picY);
+                        MatrixUtils.getMatrix(mCutScene.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,
+                                bean.sourceWidth,bean.sourceHeight,picX,picY);
+
                         mOutputFilter=new YuvOutputFilter(YuvOutputFilter.EXPORT_TYPE_NV21);
                         mOutputFilter.create();
                         mOutputFilter.sizeChanged(picX,picY);
-                        MatrixUtils.getMatrix(mOutputFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,
-                                bean.sourceWidth,bean.sourceHeight,picX,picY);
-                        MatrixUtils.flip(mOutputFilter.getVertexMatrix(),false,true);
                         tempBuffer=new byte[picX*picY*3/2];
                     }
-                    mFb.bindFrameBuffer(picX,picY);
-                    mOutputFilter.draw(bean.textureId);
-                    mOutputFilter.getOutput(tempBuffer);
+                    mOutputFilter.drawToTexture(mCutScene.drawToTexture(bean.textureId));
+                    mOutputFilter.getOutput(tempBuffer,0,picX*picY*3/2);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -121,7 +125,6 @@ public class YuvExportActivity extends AppCompatActivity {
                             mImage.setVisibility(View.VISIBLE);
                         }
                     });
-                    mFb.unBindFrameBuffer();
                     exportFlag=false;
                 }
             }

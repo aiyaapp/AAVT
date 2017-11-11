@@ -35,8 +35,7 @@ public class CameraProvider implements ITextureProvider {
     private Camera mCamera;
     private int cameraId=1;
     private Semaphore mFrameSem;
-    private String TAG=getClass().getSimpleName();
-    private final Object LOCK=new Object();
+    private String tag=getClass().getSimpleName();
 
     @Override
     public Point open(final SurfaceTexture surface) {
@@ -50,7 +49,7 @@ public class CameraProvider implements ITextureProvider {
             mCamera.startPreview();
             size.x=s.height;
             size.y=s.width;
-            AvLog.i(TAG,"Camera Opened");
+            AvLog.i(tag,"Camera Opened");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,7 +90,7 @@ public class CameraProvider implements ITextureProvider {
 
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-            AvLog.d(TAG,"onFrameAvailable");
+            AvLog.d(tag,"onFrameAvailable");
             mFrameSem.drainPermits();
             mFrameSem.release();
         }

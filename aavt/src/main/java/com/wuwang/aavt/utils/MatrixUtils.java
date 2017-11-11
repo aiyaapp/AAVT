@@ -49,10 +49,10 @@ public enum MatrixUtils {
      */
     public static float[] getOriginalVertexCo(){
         return new float[]{
-                -1.0f,1.0f,
                 -1.0f,-1.0f,
-                1.0f,1.0f,
-                1.0f,-1.0f
+                -1.0f,1.0f,
+                1.0f,-1.0f,
+                1.0f,1.0f
         };
     }
 

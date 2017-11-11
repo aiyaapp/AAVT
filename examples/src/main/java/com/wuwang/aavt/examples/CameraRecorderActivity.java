@@ -5,6 +5,8 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
@@ -18,7 +20,9 @@ import com.wuwang.aavt.gl.BeautyFilter;
 import com.wuwang.aavt.gl.BlackMagicFilter;
 import com.wuwang.aavt.gl.GrayFilter;
 import com.wuwang.aavt.gl.GroupFilter;
+import com.wuwang.aavt.gl.LazyFilter;
 import com.wuwang.aavt.gl.WaterMarkFilter;
+import com.wuwang.aavt.utils.MatrixUtils;
 
 public class CameraRecorderActivity extends AppCompatActivity{
 
@@ -41,16 +45,15 @@ public class CameraRecorderActivity extends AppCompatActivity{
         mTvPreview= (TextView) findViewById(R.id.mTvShow);
 
         mCamera =new CameraRecorder2();
-//        GroupFilter filter=new GroupFilter(getResources());
-//        mCamera.setRenderer(filter);
-//        filter.addFilter(new BeautyFilter(getResources()).setBeautyLevel(4));
-//        filter.addFilter(new WaterMarkFilter().setMarkPosition(30,10,100,76).setMark(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher)));
         mCamera.setOutputPath(tempPath);
 
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-
+                GroupFilter filter=new GroupFilter(getResources());
+                mCamera.setRenderer(filter);
+                filter.addFilter(new BeautyFilter(getResources()).setBeautyLevel(4));
+                filter.addFilter(new WaterMarkFilter().setMarkPosition(30,10,100,76).setMark(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher)));
             }
 
             @Override
@@ -88,9 +91,14 @@ public class CameraRecorderActivity extends AppCompatActivity{
                     mCamera.startRecord();
                 }else{
                     mCamera.stopRecord();
-                    Intent v=new Intent(Intent.ACTION_VIEW);
-                    v.setDataAndType(Uri.parse(tempPath),"video/mp4");
-                    startActivity(v);
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Intent v=new Intent(Intent.ACTION_VIEW);
+                            v.setDataAndType(Uri.parse(tempPath),"video/mp4");
+                            startActivity(v);
+                        }
+                    },1000);
                 }
                 break;
         }

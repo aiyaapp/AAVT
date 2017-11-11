@@ -18,6 +18,7 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
 import com.wuwang.aavt.utils.GpuUtils;
+import com.wuwang.aavt.utils.MatrixUtils;
 
 /**
  * WaterMarkFilter
@@ -30,6 +31,7 @@ public class WaterMarkFilter extends LazyFilter{
     private int[] viewPort=new int[4];
     private int[] markPort=new int[4];
     private final LazyFilter mark=new LazyFilter(){
+
         @Override
         protected void onClear() {
 
@@ -38,13 +40,13 @@ public class WaterMarkFilter extends LazyFilter{
     private int markTextureId=-1;
 
     public WaterMarkFilter setMarkPosition(final int x, final int y, final int width, final int height){
+        markPort[0]=x;
+        markPort[1]=y;
+        markPort[2]=width;
+        markPort[3]=height;
         runOnGLThread(new Runnable() {
             @Override
             public void run() {
-                markPort[0]=x;
-                markPort[1]=y;
-                markPort[2]=width;
-                markPort[3]=height;
                 mark.sizeChanged(width, height);
             }
         });

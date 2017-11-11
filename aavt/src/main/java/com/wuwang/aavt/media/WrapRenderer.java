@@ -35,11 +35,17 @@ public class WrapRenderer implements Renderer {
     public WrapRenderer(Renderer renderer){
         this.mRenderer=renderer;
         mFilter=new OesFilter();
+        setFlag(TYPE_MOVE);
     }
 
     public void setFlag(int flag){
         if(flag==TYPE_MOVE){
-            mFilter.setVertexCo(MatrixUtils.getOriginalVertexCo());
+            mFilter.setVertexCo(new float[]{
+                    -1.0f,1.0f,
+                    -1.0f,-1.0f,
+                    1.0f,1.0f,
+                    1.0f,-1.0f,
+            });
         }else if(flag==TYPE_CAMERA){
             mFilter.setVertexCo(new float[]{
                     -1.0f, -1.0f,

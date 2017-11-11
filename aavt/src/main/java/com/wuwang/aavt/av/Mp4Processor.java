@@ -17,6 +17,7 @@ import com.wuwang.aavt.egl.EGLConfigAttrs;
 import com.wuwang.aavt.egl.EGLContextAttrs;
 import com.wuwang.aavt.egl.EglHelper;
 import com.wuwang.aavt.log.AvLog;
+import com.wuwang.aavt.media.WrapRenderer;
 import com.wuwang.aavt.utils.GpuUtils;
 
 import java.io.IOException;
