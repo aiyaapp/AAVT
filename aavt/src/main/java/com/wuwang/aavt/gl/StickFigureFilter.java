@@ -16,19 +16,23 @@ package com.wuwang.aavt.gl;
 import android.content.res.Resources;
 
 /**
- * BaseFuncFilter 基础功能滤镜
+ * StickFigureFilter
  *
  * @author wuwang
- * @version v1.0 2017:10:31 11:47
+ * @version v1.0 2017:11:11 18:28
  */
-class BaseFuncFilter extends BaseFilter {
+public class StickFigureFilter extends GroupFilter {
 
-    static final String FILTER_SOBEL="shader/func/sobel.frag";
-    static final String FILTER_SOBEL_REVERSE="shader/func/sobel2.frag";
-    static final String FILTER_GAUSS="shader/func/gauss.frag";
-
-    BaseFuncFilter(Resources resource, String fragment) {
-        super(resource, "shader/base.vert", fragment);
-        shaderNeedTextureSize(true);
+    public StickFigureFilter(Resources resources){
+        super(resources);
     }
+
+    @Override
+    protected void initBuffer() {
+        super.initBuffer();
+        addFilter(new GrayFilter(mRes));
+        addFilter(new BaseFuncFilter(mRes,BaseFuncFilter.FILTER_GAUSS));
+        addFilter(new BaseFuncFilter(mRes,BaseFuncFilter.FILTER_SOBEL_REVERSE));
+    }
+
 }
