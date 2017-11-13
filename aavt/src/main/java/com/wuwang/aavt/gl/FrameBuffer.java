@@ -117,7 +117,9 @@ public class FrameBuffer {
      * 取消FrameBuffer绑定
      */
     public void unBindFrameBuffer(){
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,mFrameTemp[3]);
+        if(mFrameTemp!=null){
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,mFrameTemp[3]);
+        }
     }
 
     /**

@@ -20,6 +20,7 @@ import android.graphics.YuvImage;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.opengl.EGLSurface;
+import android.opengl.GLES20;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -55,8 +56,8 @@ public class YuvExportActivity extends AppCompatActivity {
     private boolean exportFlag=false;
     private ImageView mImage;
     private Bitmap mBitmap;
-    private int picX=720;
-    private int picY=1280;
+    private int picX=368;
+    private int picY=640;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -100,18 +101,14 @@ public class YuvExportActivity extends AppCompatActivity {
             public void onDrawEnd(EGLSurface surface, RenderBean bean) {
                 if(exportFlag){
                     if(mOutputFilter==null){
-                        mCutScene=new LazyFilter();
-                        mCutScene.create();
-                        mCutScene.sizeChanged(picX,picY);
-                        MatrixUtils.getMatrix(mCutScene.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,
-                                bean.sourceWidth,bean.sourceHeight,picX,picY);
-
                         mOutputFilter=new YuvOutputFilter(YuvOutputFilter.EXPORT_TYPE_NV21);
                         mOutputFilter.create();
                         mOutputFilter.sizeChanged(picX,picY);
+                        mOutputFilter.setInputTextureSize(bean.sourceWidth,bean.sourceHeight);
                         tempBuffer=new byte[picX*picY*3/2];
                     }
-                    mOutputFilter.drawToTexture(mCutScene.drawToTexture(bean.textureId));
+
+                    mOutputFilter.drawToTexture(bean.textureId);
                     mOutputFilter.getOutput(tempBuffer,0,picX*picY*3/2);
                     runOnUiThread(new Runnable() {
                         @Override

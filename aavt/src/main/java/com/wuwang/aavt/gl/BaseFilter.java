@@ -202,11 +202,14 @@ public abstract class BaseFilter implements Renderer {
         GLES20.glDeleteProgram(mGLProgram);
     }
 
-    protected void onUseProgram(){
-        GLES20.glUseProgram(mGLProgram);
+    protected void onTaskExec(){
         while (!mTasks.isEmpty()){
             mTasks.removeFirst().run();
         }
+    }
+
+    protected void onUseProgram(){
+        GLES20.glUseProgram(mGLProgram);
     }
 
     protected void onDraw(){

@@ -16,6 +16,8 @@ package com.wuwang.aavt.gl;
 import android.content.res.Resources;
 import android.opengl.GLES20;
 
+import com.wuwang.aavt.utils.MatrixUtils;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -37,6 +39,7 @@ public class YuvOutputFilter extends BaseFilter {
     public static final int EXPORT_TYPE_NV21=4;
 
     private BaseFilter mExportFilter;
+    private LazyFilter mScaleFilter;
 
     public YuvOutputFilter(int type) {
         super(null,"None","None");
@@ -64,14 +67,31 @@ public class YuvOutputFilter extends BaseFilter {
         mTempBuffer=ByteBuffer.allocate(mWidth*mHeight*3/2);
     }
 
+    public void setInputTextureSize(final int width, final int height){
+        runOnGLThread(new Runnable() {
+            @Override
+            public void run() {
+                mScaleFilter=new LazyFilter();
+                mScaleFilter.create();
+                mScaleFilter.sizeChanged(mWidth,mHeight);
+                MatrixUtils.getMatrix(mScaleFilter.getVertexMatrix(),MatrixUtils.TYPE_CENTERCROP,width,height,
+                        mWidth,mHeight);
+            }
+        });
+    }
+
     @Override
     public void draw(int texture) {
+        onTaskExec();
         boolean isBlend= GLES20.glIsEnabled(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_BLEND);
         GLES20.glGetIntegerv(GLES20.GL_VIEWPORT,lastViewPort,0);
         GLES20.glViewport(0,0,mWidth,mHeight);
-        GLES20.glViewport(0,0,mWidth,mHeight);
-        mExportFilter.draw(texture);
+        if(mScaleFilter!=null){
+            mExportFilter.draw(mScaleFilter.drawToTexture(texture));
+        }else{
+            mExportFilter.draw(texture);
+        }
         GLES20.glReadPixels(0,0,mWidth,mHeight*3/8,GLES20.GL_RGBA,GLES20.GL_UNSIGNED_BYTE,mTempBuffer);
         GLES20.glViewport(lastViewPort[0],lastViewPort[1],lastViewPort[2],lastViewPort[3]);
         if(isBlend){
