@@ -210,6 +210,7 @@ public abstract class BaseFilter implements Renderer {
 
     protected void onUseProgram(){
         GLES20.glUseProgram(mGLProgram);
+        onTaskExec();
     }
 
     protected void onDraw(){
@@ -227,7 +228,7 @@ public abstract class BaseFilter implements Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
     }
 
-    protected void runOnGLThread(Runnable runnable){
+    public void runOnGLThread(Runnable runnable){
         mTasks.addLast(runnable);
     }
 

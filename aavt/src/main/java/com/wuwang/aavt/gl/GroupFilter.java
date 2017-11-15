@@ -15,6 +15,7 @@ package com.wuwang.aavt.gl;
 
 import android.content.res.Resources;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -26,8 +27,7 @@ import java.util.Vector;
  */
 public class GroupFilter extends LazyFilter {
 
-    private Vector<BaseFilter> mGroup;
-    private Vector<BaseFilter> mTempGroup;
+    private ArrayList<BaseFilter> mGroup;
 
     public GroupFilter(Resources resource) {
         super(resource);
@@ -40,89 +40,74 @@ public class GroupFilter extends LazyFilter {
     @Override
     protected void initBuffer() {
         super.initBuffer();
-        mGroup=new Vector<>();
-        mTempGroup=new Vector<>();
+        mGroup=new ArrayList<>();
     }
 
-    public synchronized void addFilter(BaseFilter filter){
-        mGroup.add(filter);
-        mTempGroup.add(filter);
+    public void addFilter(final BaseFilter filter){
+        runOnGLThread(new Runnable() {
+            @Override
+            public void run() {
+                filter.create();
+                filter.sizeChanged(mWidth,mHeight);
+                mGroup.add(filter);
+            }
+        });
     }
 
-    public synchronized void addFilter(int index,BaseFilter filter){
-        mGroup.add(index, filter);
-        mTempGroup.add(filter);
+    public void addFilter(final int index,final BaseFilter filter){
+        runOnGLThread(new Runnable() {
+            @Override
+            public void run() {
+                filter.create();
+                filter.sizeChanged(mWidth,mHeight);
+                mGroup.add(index, filter);
+            }
+        });
     }
 
-    public synchronized BaseFilter removeFilter(int index){
-        return mGroup.remove(index);
+    public BaseFilter removeFilter(final int index){
+        BaseFilter filter=mGroup.get(index);
+        runOnGLThread(new Runnable() {
+            @Override
+            public void run() {
+                BaseFilter filter=mGroup.remove(index);
+                if(filter!=null){
+                    filter.destroy();
+                }
+            }
+        });
+        return filter;
     }
 
-    public boolean removeFilter(BaseFilter filter){
-        return mGroup.remove(filter);
+    public void removeFilter(final BaseFilter filter){
+        runOnGLThread(new Runnable() {
+            @Override
+            public void run() {
+                mGroup.remove(filter);
+            }
+        });
     }
 
-    public synchronized BaseFilter element(int index){
-        return mGroup.elementAt(index);
+    public BaseFilter get(int index){
+        return mGroup.get(index);
     }
 
-    public synchronized Iterator<BaseFilter> iterator(){
+    public Iterator<BaseFilter> iterator(){
         return mGroup.iterator();
     }
 
-    public synchronized boolean isEmpty(){
+    public boolean isEmpty(){
         return mGroup.isEmpty();
     }
 
     @Override
-    protected synchronized void onCreate() {
-        super.onCreate();
-        for (BaseFilter filter : mGroup) {
-            filter.create();
-        }
-        mTempGroup.clear();
-    }
-
-    private void tempFilterInit(int width,int height){
-        for (BaseFilter filter : mTempGroup) {
-            filter.create();
-            filter.sizeChanged(width, height);
-        }
-        mTempGroup.removeAllElements();
-    }
-
-    @Override
-    protected synchronized void onSizeChanged(int width, int height) {
-        super.onSizeChanged(width, height);
-        for (BaseFilter filter : mGroup) {
-            filter.sizeChanged(width, height);
-        }
-    }
-
-    @Override
     public void draw(int texture) {
-        if(mTempGroup.size()>0){
-            tempFilterInit(mWidth,mHeight);
-        }
         int tempTextureId=texture;
         for (int i=0;i<mGroup.size();i++){
             BaseFilter filter=mGroup.get(i);
             tempTextureId=filter.drawToTexture(tempTextureId);
         }
         super.draw(tempTextureId);
-    }
-
-    @Override
-    public int drawToTexture(int texture) {
-        if(mTempGroup.size()>0){
-            tempFilterInit(mWidth,mHeight);
-        }
-        int tempTextureId=texture;
-        for (int i=0;i<mGroup.size();i++){
-            BaseFilter filter=mGroup.get(i);
-            tempTextureId=filter.drawToTexture(tempTextureId);
-        }
-        return super.drawToTexture(tempTextureId);
     }
 
 }

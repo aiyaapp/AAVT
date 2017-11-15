@@ -106,7 +106,7 @@ public class ProxyFilter extends BaseFilter {
     }
 
     @Override
-    protected void runOnGLThread(Runnable runnable) {
+    public void runOnGLThread(Runnable runnable) {
         base.runOnGLThread(runnable);
     }
 
