@@ -166,6 +166,7 @@ public class VideoSurfaceProcessor{
         synchronized (LOCK){
             rb.endFlag=true;
             observable.notify(rb);
+            mRenderer.destroy();
             destroyGL(egl);
             LOCK.notifyAll();
             AvLog.d(TAG,"gl thread exit");
