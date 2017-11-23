@@ -51,7 +51,7 @@ public class FrameBuffer {
         }
         if(mFrameTemp==null){
             return createFrameBuffer(hasRenderBuffer,width,height, GLES20.GL_TEXTURE_2D,GLES20.GL_RGBA,
-                    GLES20.GL_NEAREST,GLES20.GL_LINEAR,GLES20.GL_CLAMP_TO_EDGE,GLES20.GL_CLAMP_TO_EDGE);
+                    GLES20.GL_LINEAR,GLES20.GL_LINEAR,GLES20.GL_CLAMP_TO_EDGE,GLES20.GL_CLAMP_TO_EDGE);
         }else{
             return bindFrameBuffer();
         }

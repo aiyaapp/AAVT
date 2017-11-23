@@ -13,14 +13,8 @@
  */
 package com.wuwang.aavt.examples;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.ImageFormat;
-import android.graphics.YuvImage;
-import android.hardware.display.DisplayManager;
-import android.hardware.display.VirtualDisplay;
 import android.opengl.EGLSurface;
-import android.opengl.GLES20;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -36,7 +30,6 @@ import com.wuwang.aavt.media.CameraProvider;
 import com.wuwang.aavt.media.RenderBean;
 import com.wuwang.aavt.media.SurfaceShower;
 import com.wuwang.aavt.media.VideoSurfaceProcessor;
-import com.wuwang.aavt.utils.MatrixUtils;
 
 /**
  * YuvExportActivity

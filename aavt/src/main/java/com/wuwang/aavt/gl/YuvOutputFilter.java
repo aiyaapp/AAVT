@@ -123,7 +123,7 @@ public class YuvOutputFilter extends BaseFilter {
                 "\n" +
                 "float cY(float x,float y){\n" +
                 "    vec4 c=texture2D(uTexture,vec2(x,y));\n" +
-                "    return c.r*0.2126+c.g*0.7152+c.b*0.0722;\n" +
+                "    return c.r*0.2126+c.g*0.7152+c.b*0.0722+0.0625;\n" +
                 "}\n" +
                 "\n" +
                 "vec4 cC(float x,float y,float dx,float dy){\n" +

@@ -1,3 +1,5 @@
+precision highp float;
+precision highp int;
 attribute vec4 aVertexCo;
 attribute vec2 aTextureCo;
 

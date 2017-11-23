@@ -8,10 +8,13 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:contentDescription="@string/app_name"
         android:layout_centerInParent="true"
         android:onClick="onClick"
-        android:scaleType="fitStart"
+        android:scaleType="centerCrop"
         android:clickable="true"
         android:id="@+id/mImage"
         android:focusable="true" />

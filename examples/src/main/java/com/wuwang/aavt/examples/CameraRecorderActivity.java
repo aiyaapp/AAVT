@@ -13,6 +13,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.wuwang.aavt.av.CameraRecorder2;
 import com.wuwang.aavt.gl.BaseFilter;
@@ -51,9 +52,9 @@ public class CameraRecorderActivity extends AppCompatActivity{
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                GroupFilter filter=new GroupFilter(getResources());
-                mCamera.setRenderer(filter);
-                filter.addFilter(new StickFigureFilter(getResources()));
+//                GroupFilter filter=new GroupFilter(getResources());
+//                mCamera.setRenderer(filter);
+//                filter.addFilter(new StickFigureFilter(getResources()));
 //                filter.addFilter(new BeautyFilter(getResources()).setBeautyLevel(4));
 //                filter.addFilter(new WaterMarkFilter().setMarkPosition(30,10,100,76).setMark(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher)));
             }
@@ -98,11 +99,18 @@ public class CameraRecorderActivity extends AppCompatActivity{
                         public void run() {
                             Intent v=new Intent(Intent.ACTION_VIEW);
                             v.setDataAndType(Uri.parse(tempPath),"video/mp4");
-                            startActivity(v);
+                            if(v.resolveActivity(getPackageManager()) != null){
+                                startActivity(v);
+                            }else{
+                                Toast.makeText(CameraRecorderActivity.this,
+                                        "无法找到默认媒体软件打开:"+tempPath, Toast.LENGTH_SHORT).show();
+                            }
                         }
                     },1000);
                 }
                 break;
+                default:
+                    break;
         }
     }
 
