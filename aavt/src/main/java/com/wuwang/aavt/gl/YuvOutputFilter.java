@@ -123,7 +123,7 @@ public class YuvOutputFilter extends BaseFilter {
                 "\n" +
                 "float cY(float x,float y){\n" +
                 "    vec4 c=texture2D(uTexture,vec2(x,y));\n" +
-                "    return c.r*0.2126+c.g*0.7152+c.b*0.0722+0.0625;\n" +
+                "    return c.r*0.257+c.g*0.504+c.b*0.098+0.0625;\n" +
                 "}\n" +
                 "\n" +
                 "vec4 cC(float x,float y,float dx,float dy){\n" +
@@ -136,12 +136,12 @@ public class YuvOutputFilter extends BaseFilter {
                 "\n" +
                 "float cU(float x,float y,float dx,float dy){\n" +
                 "    vec4 c=cC(x,y,dx,dy);\n" +
-                "    return -0.09991*c.r - 0.33609*c.g + 0.43600*c.b+0.5000;\n" +
+                "    return -0.148*c.r - 0.291*c.g + 0.439*c.b+0.5000;\n" +
                 "}\n" +
                 "\n" +
                 "float cV(float x,float y,float dx,float dy){\n" +
                 "    vec4 c=cC(x,y,dx,dy);\n" +
-                "    return 0.61500*c.r - 0.55861*c.g - 0.05639*c.b+0.5000;\n" +
+                "    return 0.439*c.r - 0.368*c.g - 0.071*c.b+0.5000;\n" +
                 "}\n" +
                 "\n" +
                 "vec2 cPos(float t,float shiftx,float gy){\n" +

@@ -22,8 +22,8 @@ allprojects {
 
 
 ext{
-    vCode=19
-    vName="a0.1.9"
+    vCode=20
+    vName="a0.2.0"
 }
 
 task clean(type: Delete) {
